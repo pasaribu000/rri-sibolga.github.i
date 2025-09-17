@@ -520,25 +520,17 @@
                     loadEmployeesFromFirestore();
                     loadLeaveData();
                 } else {
-                    // User is signed out
-                    console.log('🚪 User signed out');
+                    // User is signed out - STILL LOAD DATA FOR PUBLIC ACCESS
+                    console.log('🚪 User signed out - Loading data for public access');
                     document.getElementById('userInfo').classList.add('hidden');
                     document.getElementById('logoutBtn').classList.add('hidden');
                     isAdminMode = false;
                     updateModeDisplay();
                     document.getElementById('adminControls').classList.add('hidden');
                     
-                    // Clear data
-                    employees = [];
-                    filteredEmployees = [];
-                    renderEmployees();
-                    updateStatistics();
-                    
-                    // Unsubscribe from Firestore listener
-                    if (unsubscribeEmployees) {
-                        unsubscribeEmployees();
-                        unsubscribeEmployees = null;
-                    }
+                    // Load employees data even when not logged in (public access)
+                    loadEmployeesFromFirestore();
+                    loadLeaveData();
                 }
             });
         }
@@ -561,12 +553,17 @@
 
         // Load employees from Firestore
         function loadEmployeesFromFirestore() {
-            const { collection, onSnapshot, query, orderBy } = window.firebaseServices;
+            const { collection, onSnapshot, query, orderBy, getDocs } = window.firebaseServices;
             
             try {
                 console.log('📊 Loading employees from Firestore...');
                 const employeesRef = collection(window.firebaseDb, 'employees');
                 const q = query(employeesRef, orderBy('name'));
+                
+                // Unsubscribe from previous listener if exists
+                if (unsubscribeEmployees) {
+                    unsubscribeEmployees();
+                }
                 
                 unsubscribeEmployees = onSnapshot(q, (snapshot) => {
                     employees = [];
@@ -578,12 +575,32 @@
                     });
                     
                     console.log('✅ Loaded employees:', employees.length);
+                    console.log('📋 Employee data:', employees);
                     filteredEmployees = [...employees];
                     renderEmployees();
                     updateStatistics();
                 }, (error) => {
                     console.error('❌ Error loading employees:', error);
-                    showNotification('Gagal memuat data pegawai: ' + error.message, 'error');
+                    
+                    // Fallback: Try to load data without real-time listener
+                    console.log('🔄 Trying fallback method...');
+                    getDocs(q).then((snapshot) => {
+                        employees = [];
+                        snapshot.forEach((doc) => {
+                            employees.push({
+                                id: doc.id,
+                                ...doc.data()
+                            });
+                        });
+                        
+                        console.log('✅ Fallback loaded employees:', employees.length);
+                        filteredEmployees = [...employees];
+                        renderEmployees();
+                        updateStatistics();
+                    }).catch((fallbackError) => {
+                        console.error('❌ Fallback also failed:', fallbackError);
+                        showNotification('Gagal memuat data pegawai. Periksa koneksi internet.', 'error');
+                    });
                 });
             } catch (error) {
                 console.error('❌ Error setting up Firestore listener:', error);
@@ -1145,6 +1162,9 @@
             const employeeGrid = document.getElementById('employeeGrid');
             const noDataMessage = document.getElementById('noDataMessage');
             
+            console.log('🎨 Rendering employees:', employeesToRender.length);
+            console.log('👥 Employees to render:', employeesToRender);
+            
             if (employeesToRender.length === 0) {
                 employeeGrid.classList.add('hidden');
                 noDataMessage.classList.remove('hidden');
@@ -1158,7 +1178,7 @@
             }
 
             employeeGrid.classList.remove('hidden');
-            noDataMessage.classList.remove('hidden');
+            noDataMessage.classList.add('hidden');
 
             employeeGrid.innerHTML = employeesToRender.map(employee => {
                 const totalCuti = (employee.cutiTahunan || 0) + (employee.cutiBesar || 0) + (employee.cutiAlasanPenting || 0) + 
@@ -1767,5 +1787,5 @@
         window.editEmployee = editEmployee;
         window.deleteEmployee = deleteEmployee;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98098d3ae1481ed9',t:'MTc1ODEyMjA1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9809996061103e3b',t:'MTc1ODEyMjU0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
