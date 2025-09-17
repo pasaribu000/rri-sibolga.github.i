@@ -252,6 +252,10 @@
                             <i class="fas fa-bug"></i>
                             <span>Debug Spreadsheet</span>
                         </button>
+                        <button id="testFirestoreBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                            <i class="fas fa-database"></i>
+                            <span>Test Database</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -452,10 +456,32 @@
 
         // Initialize Application
         window.initApp = function() {
+            console.log('🚀 Initializing app...');
+            console.log('Firebase Auth:', window.firebaseAuth);
+            console.log('Firebase DB:', window.firebaseDb);
+            
+            // Test Firestore connection
+            testFirestoreConnection();
+            
             setupAuthStateListener();
             setupEventListeners();
             hideLoadingScreen();
         };
+
+        // Test Firestore connection
+        async function testFirestoreConnection() {
+            try {
+                console.log('🔍 Testing Firestore connection...');
+                const { collection, getDocs } = window.firebaseServices;
+                const testCollection = collection(window.firebaseDb, 'employees');
+                const snapshot = await getDocs(testCollection);
+                console.log('✅ Firestore connection successful. Documents found:', snapshot.size);
+                showNotification('Koneksi database berhasil', 'success');
+            } catch (error) {
+                console.error('❌ Firestore connection failed:', error);
+                showNotification('Koneksi ke database gagal: ' + error.message, 'error');
+            }
+        }
 
         // Hide loading screen
         function hideLoadingScreen() {
@@ -473,15 +499,18 @@
             const { onAuthStateChanged } = window.firebaseServices;
             
             onAuthStateChanged(window.firebaseAuth, (user) => {
+                console.log('🔐 Auth state changed:', user);
                 currentUser = user;
                 if (user) {
                     // User is signed in
+                    console.log('✅ User signed in:', user.email);
                     document.getElementById('userInfo').classList.remove('hidden');
                     document.getElementById('userEmail').textContent = user.email;
                     document.getElementById('logoutBtn').classList.remove('hidden');
                     
                     // Check if user is admin
                     if (user.email === 'priadipasaribu@gmail.com') {
+                        console.log('👑 Admin user detected');
                         isAdminMode = true;
                         updateModeDisplay();
                         document.getElementById('adminControls').classList.remove('hidden');
@@ -492,6 +521,7 @@
                     loadLeaveData();
                 } else {
                     // User is signed out
+                    console.log('🚪 User signed out');
                     document.getElementById('userInfo').classList.add('hidden');
                     document.getElementById('logoutBtn').classList.add('hidden');
                     isAdminMode = false;
@@ -534,6 +564,7 @@
             const { collection, onSnapshot, query, orderBy } = window.firebaseServices;
             
             try {
+                console.log('📊 Loading employees from Firestore...');
                 const employeesRef = collection(window.firebaseDb, 'employees');
                 const q = query(employeesRef, orderBy('name'));
                 
@@ -546,16 +577,17 @@
                         });
                     });
                     
+                    console.log('✅ Loaded employees:', employees.length);
                     filteredEmployees = [...employees];
                     renderEmployees();
                     updateStatistics();
                 }, (error) => {
-                    console.error('Error loading employees:', error);
-                    showNotification('Gagal memuat data pegawai', 'error');
+                    console.error('❌ Error loading employees:', error);
+                    showNotification('Gagal memuat data pegawai: ' + error.message, 'error');
                 });
             } catch (error) {
-                console.error('Error setting up Firestore listener:', error);
-                showNotification('Gagal menghubungkan ke database', 'error');
+                console.error('❌ Error setting up Firestore listener:', error);
+                showNotification('Gagal menghubungkan ke database: ' + error.message, 'error');
             }
         }
 
@@ -938,6 +970,7 @@
             document.getElementById('exportDataBtn').addEventListener('click', exportToExcel);
             document.getElementById('syncDataBtn').addEventListener('click', syncData);
             document.getElementById('debugSpreadsheetBtn').addEventListener('click', debugSpreadsheet);
+            document.getElementById('testFirestoreBtn').addEventListener('click', testFirestoreConnection);
             document.getElementById('closeModal').addEventListener('click', closeEmployeeModal);
             document.getElementById('closeFormModal').addEventListener('click', closeFormModal);
             document.getElementById('cancelForm').addEventListener('click', closeFormModal);
@@ -996,17 +1029,33 @@
             submitBtn.disabled = true;
             
             try {
+                console.log('🔐 Attempting login for:', email);
                 const { signInWithEmailAndPassword } = window.firebaseServices;
-                await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+                const userCredential = await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+                console.log('✅ Login successful:', userCredential.user.email);
                 
                 closeLoginModal();
                 showNotification('Login berhasil!', 'success');
                 loginError.classList.add('hidden');
             } catch (error) {
-                console.error('Login error:', error);
-                loginError.textContent = 'Email atau password salah!';
+                console.error('❌ Login error:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                
+                let errorMessage = 'Email atau password salah!';
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'User tidak ditemukan. Pastikan email sudah terdaftar di Firebase.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Password salah!';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Format email tidak valid!';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Terlalu banyak percobaan login. Coba lagi nanti.';
+                }
+                
+                loginError.textContent = errorMessage;
                 loginError.classList.remove('hidden');
-                showNotification('Login gagal', 'error');
+                showNotification('Login gagal: ' + errorMessage, 'error');
             } finally {
                 // Hide loading state
                 loginText.classList.remove('hidden');
@@ -1053,7 +1102,7 @@
             }
 
             employeeGrid.classList.remove('hidden');
-            noDataMessage.classList.add('hidden');
+            noDataMessage.classList.remove('hidden');
 
             employeeGrid.innerHTML = employeesToRender.map(employee => {
                 const totalCuti = (employee.cutiTahunan || 0) + (employee.cutiBesar || 0) + (employee.cutiAlasanPenting || 0) + 
@@ -1329,11 +1378,23 @@
         async function handleEmployeeSubmit(e) {
             e.preventDefault();
             
-            if (!isAdminMode) return;
+            console.log('📝 Form submitted, checking admin mode:', isAdminMode);
+            console.log('👤 Current user:', currentUser);
             
-            const name = document.getElementById('employeeName').value;
-            const nip = document.getElementById('employeeNIP').value;
-            const position = document.getElementById('employeePosition').value;
+            if (!isAdminMode || !currentUser) {
+                showNotification('Anda harus login sebagai admin untuk menambah pegawai', 'error');
+                return;
+            }
+            
+            const name = document.getElementById('employeeName').value.trim();
+            const nip = document.getElementById('employeeNIP').value.trim();
+            const position = document.getElementById('employeePosition').value.trim();
+            
+            // Validation
+            if (!name || !nip || !position) {
+                showNotification('Semua field harus diisi!', 'error');
+                return;
+            }
             
             let photo = '';
             let photoData = null;
@@ -1346,7 +1407,7 @@
                 // Use selected emoji
                 const selectedPhoto = document.querySelector('input[name="employeePhoto"]:checked');
                 if (!selectedPhoto) {
-                    alert('Silakan pilih foto pegawai atau upload gambar');
+                    showNotification('Silakan pilih foto pegawai atau upload gambar', 'error');
                     return;
                 }
                 photo = selectedPhoto.value;
@@ -1362,6 +1423,7 @@
             submitBtn.disabled = true;
 
             try {
+                console.log('💾 Attempting to save employee data...');
                 const { collection, addDoc, doc, updateDoc } = window.firebaseServices;
                 
                 const employeeData = {
@@ -1370,17 +1432,21 @@
                     position,
                     photo,
                     photoData,
-                    updatedAt: new Date()
+                    updatedAt: new Date().toISOString()
                 };
+                
+                console.log('📊 Employee data to save:', employeeData);
                 
                 if (editingEmployeeId) {
                     // Edit existing employee
+                    console.log('✏️ Updating existing employee:', editingEmployeeId);
                     const employeeRef = doc(window.firebaseDb, 'employees', editingEmployeeId);
                     await updateDoc(employeeRef, employeeData);
                     
                     showNotification('Pegawai berhasil diperbarui', 'success');
                 } else {
                     // Add new employee
+                    console.log('➕ Adding new employee...');
                     const newEmployee = {
                         ...employeeData,
                         cutiTahunan: 0,
@@ -1398,17 +1464,34 @@
                             cutiDiluarTanggungan: '',
                             totalCuti: ''
                         },
-                        createdAt: new Date()
+                        createdAt: new Date().toISOString()
                     };
                     
-                    await addDoc(collection(window.firebaseDb, 'employees'), newEmployee);
+                    console.log('📄 New employee data:', newEmployee);
+                    const docRef = await addDoc(collection(window.firebaseDb, 'employees'), newEmployee);
+                    console.log('✅ Employee added with ID:', docRef.id);
                     showNotification('Pegawai berhasil ditambahkan', 'success');
                 }
 
                 closeFormModal();
             } catch (error) {
-                console.error('Error saving employee:', error);
-                showNotification('Gagal menyimpan data pegawai', 'error');
+                console.error('❌ Detailed error saving employee:', error);
+                console.error('🔍 Error code:', error.code);
+                console.error('📝 Error message:', error.message);
+                
+                let errorMessage = 'Gagal menyimpan data pegawai';
+                
+                if (error.code === 'permission-denied') {
+                    errorMessage = 'Akses ditolak. Pastikan Anda login sebagai admin dan Firestore rules sudah benar';
+                } else if (error.code === 'unavailable') {
+                    errorMessage = 'Layanan Firebase tidak tersedia. Coba lagi nanti';
+                } else if (error.code === 'unauthenticated') {
+                    errorMessage = 'Anda harus login terlebih dahulu';
+                } else if (error.message) {
+                    errorMessage = `Error: ${error.message}`;
+                }
+                
+                showNotification(errorMessage, 'error');
             } finally {
                 // Hide loading state
                 submitText.classList.remove('hidden');
@@ -1619,5 +1702,5 @@
         window.editEmployee = editEmployee;
         window.deleteEmployee = deleteEmployee;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98091cf534609e2c',t:'MTc1ODExNzQ1MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98097811660f89b3',t:'MTc1ODEyMTE4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
