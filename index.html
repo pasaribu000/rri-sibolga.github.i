@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layanan Informasi Cuti</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2g-S8gqwR9Iatyf24nWEIeVoPxaWXrgs",
+            authDomain: "cutiku-proyek3.firebaseapp.com",
+            projectId: "cutiku-proyek3",
+            storageBucket: "cutiku-proyek3.firebasestorage.app",
+            messagingSenderId: "396284262554",
+            appId: "1:396284262554:web:08d54fa176885d6d7d0723",
+            measurementId: "G-SJTJ6SZNS6"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Make Firebase services available globally
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseServices = {
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            collection,
+            addDoc,
+            getDocs,
+            doc,
+            updateDoc,
+            deleteDoc,
+            onSnapshot,
+            query,
+            orderBy
+        };
+
+        // Initialize app when Firebase is ready
+        window.addEventListener('load', () => {
+            if (window.initApp) {
+                window.initApp();
+            }
+        });
+    </script>
+    
+    <style>
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .modal {
+            backdrop-filter: blur(5px);
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        input[type="radio"]:checked + label {
+            background-color: #3b82f6 !important;
+            color: white;
+            transform: scale(1.1);
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .photo-preview {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-gray-600">Memuat aplikasi...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 shadow-xl border-b-4 border-yellow-400">
+        <div class="container mx-auto px-6 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white rounded-full p-3 shadow-lg">
+                        <i class="fas fa-radio text-3xl text-red-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">cutiku RRI Sibolga</h1>
+                        <p class="text-red-100 text-sm">Sistem Informasi Cuti Pegawai</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="userInfo" class="hidden text-red-100 text-sm">
+                        <span id="userEmail"></span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-red-100">Mode:</span>
+                        <button id="modeToggle" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-lg">
+                            <i class="fas fa-user"></i>
+                            <span id="modeText">Pengguna</span>
+                        </button>
+                    </div>
+                    <button id="logoutBtn" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-lg">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Pegawai -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Total Pegawai</h3>
+                        <p class="text-3xl font-bold text-blue-600" id="totalEmployees">0</p>
+                    </div>
+                    <div class="bg-blue-100 rounded-full p-4">
+                        <i class="fas fa-users text-2xl text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Jenis Cuti Terbanyak -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Jenis Cuti Terbanyak</h3>
+                        <p class="text-xl font-bold text-orange-600" id="mostUsedLeaveType">-</p>
+                        <p class="text-2xl font-bold text-orange-600" id="mostUsedLeaveCount">0 hari</p>
+                    </div>
+                    <div class="bg-orange-100 rounded-full p-4">
+                        <i class="fas fa-chart-bar text-2xl text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pegawai Cuti Hari Ini -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Pegawai Cuti Hari Ini</h3>
+                        <p class="text-3xl font-bold text-green-600" id="todayLeaveCount">0</p>
+                        <p class="text-sm text-gray-600" id="todayLeaveNames">Memuat data...</p>
+                    </div>
+                    <div class="bg-green-100 rounded-full p-4">
+                        <i class="fas fa-calendar-day text-2xl text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Action Controls -->
+        <div class="mb-8 space-y-6">
+            <!-- Search Bar -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                    <div class="flex-1 max-w-md">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-search mr-2 text-blue-600"></i>
+                            Cari Pegawai
+                        </label>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Masukkan nama pegawai..." 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                        <a 
+                            href="https://forms.google.com/your-form-id" 
+                            target="_blank"
+                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg"
+                        >
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Ajukan Cuti</span>
+                        </a>
+                        
+                        <a 
+                            href="https://drive.google.com/your-drive-folder" 
+                            target="_blank"
+                            class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg"
+                        >
+                            <i class="fas fa-download"></i>
+                            <span>Unduh Berkas</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Controls -->
+            <div id="adminControls" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-cog mr-2 text-green-600"></i>
+                        Panel Admin
+                    </h2>
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                        <button id="addEmployeeBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                            <i class="fas fa-plus"></i>
+                            <span>Tambah Pegawai</span>
+                        </button>
+                        <button id="exportDataBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Ekspor ke Excel</span>
+                        </button>
+                        <button id="syncDataBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                            <i class="fas fa-sync"></i>
+                            <span>Sinkronisasi Data</span>
+                        </button>
+                        <button id="debugSpreadsheetBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                            <i class="fas fa-bug"></i>
+                            <span>Debug Spreadsheet</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="employeeGrid">
+            <!-- Employee cards will be dynamically generated here -->
+        </div>
+
+        <!-- No Data Message -->
+        <div id="noDataMessage" class="hidden text-center py-12">
+            <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg">Belum ada data pegawai</p>
+        </div>
+    </main>
+
+    <!-- Employee Detail Modal -->
+    <div id="employeeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-user-circle mr-3 text-blue-600"></i>
+                        Detail Cuti Pegawai
+                    </h2>
+                    <button id="closeModal" class="text-gray-400 hover:text-gray-600 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="modalContent">
+                    <!-- Modal content will be dynamically generated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full fade-in">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="bg-red-100 rounded-full p-4 w-16 h-16 mx-auto mb-4">
+                        <i class="fas fa-lock text-2xl text-red-600"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Login Admin</h2>
+                    <p class="text-gray-600 text-sm">Masukkan kredensial admin untuk melanjutkan</p>
+                </div>
+                
+                <form id="adminLoginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="adminEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="adminPassword" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                    </div>
+                    <div id="loginError" class="hidden text-red-600 text-sm text-center bg-red-50 p-2 rounded">
+                        Email atau password salah!
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" id="loginSubmitBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                            <span class="login-text">Login</span>
+                            <div class="login-spinner hidden loading-spinner w-5 h-5 border-2"></div>
+                        </button>
+                        <button type="button" id="cancelLogin" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition-colors duration-200">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Employee Modal -->
+    <div id="employeeFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full fade-in max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="formModalTitle" class="text-xl font-bold text-gray-800">Tambah Pegawai</h2>
+                    <button id="closeFormModal" class="text-gray-400 hover:text-gray-600 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="employeeForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Foto Pegawai</label>
+                        
+                        <!-- Photo Preview -->
+                        <div class="mb-4 text-center">
+                            <div id="photoPreview" class="w-24 h-24 mx-auto rounded-full border-4 border-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
+                                <span id="photoPreviewContent" class="text-4xl">👨‍💼</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Photo Options -->
+                        <div class="space-y-4">
+                            <!-- Upload Custom Photo -->
+                            <div class="border border-gray-300 rounded-lg p-4 bg-blue-50">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-upload mr-2 text-blue-600"></i>
+                                    Upload Foto Pegawai
+                                </label>
+                                <input type="file" id="photoUpload" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF (Max: 2MB)</p>
+                            </div>
+                            
+                            <!-- Or Choose Emoji -->
+                            <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-smile mr-2 text-yellow-600"></i>
+                                    Atau Pilih Avatar
+                                </label>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <div class="text-center">
+                                        <input type="radio" id="photo1" name="employeePhoto" value="👨‍💼" class="hidden">
+                                        <label for="photo1" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👨‍💼</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo2" name="employeePhoto" value="👩‍💼" class="hidden">
+                                        <label for="photo2" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👩‍💼</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo3" name="employeePhoto" value="👨‍⚕️" class="hidden">
+                                        <label for="photo3" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👨‍⚕️</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo4" name="employeePhoto" value="👩‍⚕️" class="hidden">
+                                        <label for="photo4" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👩‍⚕️</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo5" name="employeePhoto" value="👨‍💻" class="hidden">
+                                        <label for="photo5" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👨‍💻</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo6" name="employeePhoto" value="👩‍💻" class="hidden">
+                                        <label for="photo6" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👩‍💻</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo7" name="employeePhoto" value="👨‍🏫" class="hidden">
+                                        <label for="photo7" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👨‍🏫</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo8" name="employeePhoto" value="👩‍🏫" class="hidden">
+                                        <label for="photo8" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👩‍🏫</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo9" name="employeePhoto" value="👨‍🔧" class="hidden">
+                                        <label for="photo9" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👨‍🔧</label>
+                                    </div>
+                                    <div class="text-center">
+                                        <input type="radio" id="photo10" name="employeePhoto" value="👩‍🔧" class="hidden">
+                                        <label for="photo10" class="block text-3xl cursor-pointer hover:bg-blue-100 p-2 rounded-lg transition-colors">👩‍🔧</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pegawai</label>
+                        <input type="text" id="employeeName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">NIP</label>
+                        <input type="text" id="employeeNIP" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jabatan</label>
+                        <input type="text" id="employeePosition" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" id="employeeSubmitBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                            <span class="submit-text">Simpan</span>
+                            <div class="submit-spinner hidden loading-spinner w-5 h-5 border-2"></div>
+                        </button>
+                        <button type="button" id="cancelForm" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition-colors duration-200">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let isAdminMode = false;
+        let currentUser = null;
+        let leaveData = []; // Data cuti dari Google Sheets
+        let filteredEmployees = []; // Filtered employees for search
+        let employees = [];
+        let editingEmployeeId = null;
+        let unsubscribeEmployees = null;
+        let currentPhotoData = null; // Store uploaded photo data
+
+        // Initialize Application
+        window.initApp = function() {
+            setupAuthStateListener();
+            setupEventListeners();
+            hideLoadingScreen();
+        };
+
+        // Hide loading screen
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                }, 300);
+            }, 1000);
+        }
+
+        // Setup authentication state listener
+        function setupAuthStateListener() {
+            const { onAuthStateChanged } = window.firebaseServices;
+            
+            onAuthStateChanged(window.firebaseAuth, (user) => {
+                currentUser = user;
+                if (user) {
+                    // User is signed in
+                    document.getElementById('userInfo').classList.remove('hidden');
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    
+                    // Check if user is admin
+                    if (user.email === 'priadipasaribu@gmail.com') {
+                        isAdminMode = true;
+                        updateModeDisplay();
+                        document.getElementById('adminControls').classList.remove('hidden');
+                    }
+                    
+                    // Load employees data
+                    loadEmployeesFromFirestore();
+                    loadLeaveData();
+                } else {
+                    // User is signed out
+                    document.getElementById('userInfo').classList.add('hidden');
+                    document.getElementById('logoutBtn').classList.add('hidden');
+                    isAdminMode = false;
+                    updateModeDisplay();
+                    document.getElementById('adminControls').classList.add('hidden');
+                    
+                    // Clear data
+                    employees = [];
+                    filteredEmployees = [];
+                    renderEmployees();
+                    updateStatistics();
+                    
+                    // Unsubscribe from Firestore listener
+                    if (unsubscribeEmployees) {
+                        unsubscribeEmployees();
+                        unsubscribeEmployees = null;
+                    }
+                }
+            });
+        }
+
+        // Update mode display
+        function updateModeDisplay() {
+            const modeText = document.getElementById('modeText');
+            const modeToggle = document.getElementById('modeToggle');
+            
+            if (isAdminMode) {
+                modeText.textContent = 'Admin';
+                modeToggle.innerHTML = '<i class="fas fa-user-shield"></i><span id="modeText">Admin</span>';
+                modeToggle.className = 'bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-lg';
+            } else {
+                modeText.textContent = 'Pengguna';
+                modeToggle.innerHTML = '<i class="fas fa-user"></i><span id="modeText">Pengguna</span>';
+                modeToggle.className = 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-lg';
+            }
+        }
+
+        // Load employees from Firestore
+        function loadEmployeesFromFirestore() {
+            const { collection, onSnapshot, query, orderBy } = window.firebaseServices;
+            
+            try {
+                const employeesRef = collection(window.firebaseDb, 'employees');
+                const q = query(employeesRef, orderBy('name'));
+                
+                unsubscribeEmployees = onSnapshot(q, (snapshot) => {
+                    employees = [];
+                    snapshot.forEach((doc) => {
+                        employees.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    filteredEmployees = [...employees];
+                    renderEmployees();
+                    updateStatistics();
+                }, (error) => {
+                    console.error('Error loading employees:', error);
+                    showNotification('Gagal memuat data pegawai', 'error');
+                });
+            } catch (error) {
+                console.error('Error setting up Firestore listener:', error);
+                showNotification('Gagal menghubungkan ke database', 'error');
+            }
+        }
+
+        // Handle search functionality
+        function handleSearch(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                filteredEmployees = [...employees];
+            } else {
+                filteredEmployees = employees.filter(employee => 
+                    employee.name.toLowerCase().includes(searchTerm) ||
+                    employee.nip.toLowerCase().includes(searchTerm) ||
+                    employee.position.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            renderEmployees();
+        }
+
+        // Handle photo upload
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Check file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showNotification('Ukuran file terlalu besar. Maksimal 2MB.', 'error');
+                e.target.value = '';
+                return;
+            }
+
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                showNotification('File harus berupa gambar.', 'error');
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentPhotoData = event.target.result;
+                updatePhotoPreview(currentPhotoData, true);
+                
+                // Clear emoji selection
+                const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
+                photoRadios.forEach(radio => radio.checked = false);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Update photo preview
+        function updatePhotoPreview(photoData = null, isUpload = false) {
+            const preview = document.getElementById('photoPreview');
+            const content = document.getElementById('photoPreviewContent');
+            
+            if (isUpload && photoData) {
+                // Show uploaded image
+                content.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = photoData;
+                img.className = 'photo-preview';
+                preview.appendChild(img);
+            } else {
+                // Show selected emoji
+                const selectedRadio = document.querySelector('input[name="employeePhoto"]:checked');
+                if (selectedRadio) {
+                    currentPhotoData = null; // Clear uploaded photo data
+                    document.getElementById('photoUpload').value = ''; // Clear file input
+                    
+                    // Remove any existing image
+                    const existingImg = preview.querySelector('img');
+                    if (existingImg) {
+                        existingImg.remove();
+                    }
+                    
+                    content.textContent = selectedRadio.value;
+                }
+            }
+        }
+
+        // Load leave data from Google Sheets
+        async function loadLeaveData() {
+            try {
+                showNotification('Memuat data cuti dari spreadsheet...', 'info');
+                
+                // URL spreadsheet yang sudah dipublikasi
+                const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzbKpHevX7OanEk05EQ51zhE7toeltg4Cu1n7OnS958vZcgop4R6j75OO9LWSPIbl210nan07F_mDh/pub?gid=443906944&single=true&output=csv';
+                
+                const response = await fetch(spreadsheetUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/csv',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                console.log('Raw CSV data loaded:', csvText.substring(0, 500) + '...');
+                
+                if (!csvText || csvText.trim() === '') {
+                    throw new Error('Empty CSV data received');
+                }
+                
+                const lines = csvText.split('\n').filter(line => line.trim() !== '');
+                
+                if (lines.length < 2) {
+                    throw new Error('Insufficient data in spreadsheet');
+                }
+                
+                const headerLine = lines[0];
+                const headers = parseCSVLine(headerLine);
+                console.log('Headers found:', headers);
+                
+                leaveData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim()) {
+                        const values = parseCSVLine(lines[i]);
+                        const row = {};
+                        headers.forEach((header, index) => {
+                            row[header] = values[index] || '';
+                        });
+                        
+                        // Only add rows that have meaningful data
+                        const hasData = Object.values(row).some(value => value && value.trim() !== '');
+                        if (hasData) {
+                            leaveData.push(row);
+                        }
+                    }
+                }
+                
+                console.log(`Loaded ${leaveData.length} leave records`);
+                updateTodayLeaveStatistics();
+                
+                if (leaveData.length > 0) {
+                    showNotification(`Berhasil memuat ${leaveData.length} data cuti`, 'success');
+                } else {
+                    showNotification('Tidak ada data cuti ditemukan', 'info');
+                }
+                
+            } catch (error) {
+                console.error('Error loading leave data:', error);
+                document.getElementById('todayLeaveCount').textContent = '0';
+                document.getElementById('todayLeaveNames').textContent = 'Gagal memuat data dari spreadsheet';
+                showNotification('Gagal memuat data cuti: ' + error.message, 'error');
+            }
+        }
+
+        // Parse CSV line handling quoted fields properly
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+
+        // Update today's leave statistics
+        function updateTodayLeaveStatistics() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            console.log('Checking leave data for today:', todayStr);
+            console.log('Total leave records:', leaveData.length);
+            
+            if (leaveData.length === 0) {
+                document.getElementById('todayLeaveCount').textContent = '0';
+                document.getElementById('todayLeaveNames').textContent = 'Belum ada data cuti';
+                return;
+            }
+            
+            // Log first few records to debug
+            console.log('Sample leave data:', leaveData.slice(0, 3));
+            
+            const todayLeaves = leaveData.filter(leave => {
+                // Try multiple possible column names for dates
+                const possibleStartColumns = [
+                    'Tanggal Mulai Cuti',
+                    'Tanggal Mulai Cuti  ',
+                    'tanggal_mulai',
+                    'Start Date',
+                    'Mulai Cuti',
+                    'Dari Tanggal'
+                ];
+                
+                const possibleEndColumns = [
+                    'Tanggal Selesai Cuti',
+                    'Tanggal Selesai Cuti  ',
+                    'tanggal_selesai',
+                    'End Date',
+                    'Selesai Cuti',
+                    'Sampai Tanggal'
+                ];
+                
+                let startDateStr = '';
+                let endDateStr = '';
+                
+                // Find start date
+                for (const col of possibleStartColumns) {
+                    if (leave[col] && leave[col].trim()) {
+                        startDateStr = leave[col].trim();
+                        break;
+                    }
+                }
+                
+                // Find end date
+                for (const col of possibleEndColumns) {
+                    if (leave[col] && leave[col].trim()) {
+                        endDateStr = leave[col].trim();
+                        break;
+                    }
+                }
+                
+                console.log('Processing leave:', {
+                    startDateStr,
+                    endDateStr,
+                    allColumns: Object.keys(leave)
+                });
+                
+                const startDate = parseDate(startDateStr);
+                const endDate = parseDate(endDateStr);
+                
+                if (!startDate || !endDate) {
+                    console.log('Failed to parse dates:', { startDateStr, endDateStr });
+                    return false;
+                }
+                
+                const startStr = startDate.toISOString().split('T')[0];
+                const endStr = endDate.toISOString().split('T')[0];
+                
+                const isToday = todayStr >= startStr && todayStr <= endStr;
+                console.log('Date check:', { todayStr, startStr, endStr, isToday });
+                
+                return isToday;
+            });
+            
+            console.log('Today leaves found:', todayLeaves.length);
+            
+            document.getElementById('todayLeaveCount').textContent = todayLeaves.length;
+            
+            if (todayLeaves.length > 0) {
+                // Try multiple possible column names for employee names
+                const possibleNameColumns = [
+                    'Nama Pegawai',
+                    'Nama Pegawai ',
+                    'nama',
+                    'Name',
+                    'Employee Name',
+                    'Nama'
+                ];
+                
+                const names = todayLeaves.map(leave => {
+                    for (const col of possibleNameColumns) {
+                        if (leave[col] && leave[col].trim()) {
+                            return leave[col].trim();
+                        }
+                    }
+                    return 'Tidak diketahui';
+                }).slice(0, 3);
+                
+                let displayText = names.join(', ');
+                if (todayLeaves.length > 3) {
+                    displayText += ` +${todayLeaves.length - 3} lainnya`;
+                }
+                document.getElementById('todayLeaveNames').textContent = displayText;
+            } else {
+                document.getElementById('todayLeaveNames').textContent = 'Tidak ada pegawai cuti hari ini';
+            }
+        }
+
+        // Parse date from various formats
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            
+            const cleanDateStr = dateStr.trim();
+            const formats = [
+                {
+                    regex: /(\d{1,2})\/(\d{1,2})\/(\d{4})/,
+                    type: 'DD/MM/YYYY'
+                },
+                {
+                    regex: /(\d{4})-(\d{1,2})-(\d{1,2})/,
+                    type: 'YYYY-MM-DD'
+                },
+                {
+                    regex: /(\d{1,2})-(\d{1,2})-(\d{4})/,
+                    type: 'DD-MM-YYYY'
+                }
+            ];
+            
+            for (const format of formats) {
+                const match = cleanDateStr.match(format.regex);
+                if (match) {
+                    let day, month, year;
+                    
+                    if (format.type === 'YYYY-MM-DD') {
+                        year = parseInt(match[1]);
+                        month = parseInt(match[2]) - 1;
+                        day = parseInt(match[3]);
+                    } else {
+                        day = parseInt(match[1]);
+                        month = parseInt(match[2]) - 1;
+                        year = parseInt(match[3]);
+                    }
+                    
+                    const date = new Date(year, month, day);
+                    if (!isNaN(date.getTime())) {
+                        return date;
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        // Update Statistics
+        function updateStatistics() {
+            document.getElementById('totalEmployees').textContent = employees.length;
+
+            const leaveTypes = {
+                'Cuti Tahunan': 0,
+                'Cuti Besar': 0,
+                'Cuti Alasan Penting': 0,
+                'Cuti Sakit': 0,
+                'Cuti Melahirkan': 0,
+                'Cuti Diluar Tanggungan': 0
+            };
+
+            employees.forEach(employee => {
+                leaveTypes['Cuti Tahunan'] += employee.cutiTahunan || 0;
+                leaveTypes['Cuti Besar'] += employee.cutiBesar || 0;
+                leaveTypes['Cuti Alasan Penting'] += employee.cutiAlasanPenting || 0;
+                leaveTypes['Cuti Sakit'] += employee.cutiSakit || 0;
+                leaveTypes['Cuti Melahirkan'] += employee.cutiMelahirkan || 0;
+                leaveTypes['Cuti Diluar Tanggungan'] += employee.cutiDiluarTanggungan || 0;
+            });
+
+            let maxType = 'Cuti Tahunan';
+            let maxCount = 0;
+            
+            for (const [type, count] of Object.entries(leaveTypes)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    maxType = type;
+                }
+            }
+
+            if (maxCount > 0) {
+                document.getElementById('mostUsedLeaveType').textContent = maxType;
+                document.getElementById('mostUsedLeaveCount').textContent = `${maxCount} hari`;
+            } else {
+                document.getElementById('mostUsedLeaveType').textContent = '-';
+                document.getElementById('mostUsedLeaveCount').textContent = '0 hari';
+            }
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            document.getElementById('modeToggle').addEventListener('click', toggleMode);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            document.getElementById('addEmployeeBtn').addEventListener('click', showAddEmployeeForm);
+            document.getElementById('exportDataBtn').addEventListener('click', exportToExcel);
+            document.getElementById('syncDataBtn').addEventListener('click', syncData);
+            document.getElementById('debugSpreadsheetBtn').addEventListener('click', debugSpreadsheet);
+            document.getElementById('closeModal').addEventListener('click', closeEmployeeModal);
+            document.getElementById('closeFormModal').addEventListener('click', closeFormModal);
+            document.getElementById('cancelForm').addEventListener('click', closeFormModal);
+            document.getElementById('cancelLogin').addEventListener('click', closeLoginModal);
+            document.getElementById('employeeForm').addEventListener('submit', handleEmployeeSubmit);
+            document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+            
+            // Photo upload and preview listeners
+            document.getElementById('photoUpload').addEventListener('change', handlePhotoUpload);
+            
+            // Emoji selection listeners
+            const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
+            photoRadios.forEach(radio => {
+                radio.addEventListener('change', updatePhotoPreview);
+            });
+            
+            // Close modals when clicking outside
+            document.getElementById('employeeModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('employeeModal')) closeEmployeeModal();
+            });
+            document.getElementById('employeeFormModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('employeeFormModal')) closeFormModal();
+            });
+            document.getElementById('adminLoginModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('adminLoginModal')) closeLoginModal();
+            });
+        }
+
+        // Toggle between user and admin mode
+        function toggleMode() {
+            if (!currentUser) {
+                document.getElementById('adminLoginModal').classList.remove('hidden');
+            } else if (isAdminMode) {
+                // Already admin, do nothing or show admin panel
+                showNotification('Anda sudah dalam mode admin', 'info');
+            } else {
+                showNotification('Anda tidak memiliki akses admin', 'error');
+            }
+        }
+
+        // Handle admin login
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const loginError = document.getElementById('loginError');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const loginText = submitBtn.querySelector('.login-text');
+            const loginSpinner = submitBtn.querySelector('.login-spinner');
+            
+            // Show loading state
+            loginText.classList.add('hidden');
+            loginSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+            
+            try {
+                const { signInWithEmailAndPassword } = window.firebaseServices;
+                await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+                
+                closeLoginModal();
+                showNotification('Login berhasil!', 'success');
+                loginError.classList.add('hidden');
+            } catch (error) {
+                console.error('Login error:', error);
+                loginError.textContent = 'Email atau password salah!';
+                loginError.classList.remove('hidden');
+                showNotification('Login gagal', 'error');
+            } finally {
+                // Hide loading state
+                loginText.classList.remove('hidden');
+                loginSpinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Handle logout
+        async function handleLogout() {
+            try {
+                const { signOut } = window.firebaseServices;
+                await signOut(window.firebaseAuth);
+                showNotification('Logout berhasil', 'success');
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('Logout gagal', 'error');
+            }
+        }
+
+        // Close login modal
+        function closeLoginModal() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+            document.getElementById('adminLoginForm').reset();
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        // Render employee cards
+        function renderEmployees() {
+            const employeesToRender = filteredEmployees || employees;
+            const employeeGrid = document.getElementById('employeeGrid');
+            const noDataMessage = document.getElementById('noDataMessage');
+            
+            if (employeesToRender.length === 0) {
+                employeeGrid.classList.add('hidden');
+                noDataMessage.classList.remove('hidden');
+                const searchTerm = document.getElementById('searchInput')?.value;
+                if (searchTerm && searchTerm.trim() !== '') {
+                    document.querySelector('#noDataMessage p').textContent = `Tidak ditemukan pegawai dengan kata kunci "${searchTerm}"`;
+                } else {
+                    document.querySelector('#noDataMessage p').textContent = 'Belum ada data pegawai';
+                }
+                return;
+            }
+
+            employeeGrid.classList.remove('hidden');
+            noDataMessage.classList.add('hidden');
+
+            employeeGrid.innerHTML = employeesToRender.map(employee => {
+                const totalCuti = (employee.cutiTahunan || 0) + (employee.cutiBesar || 0) + (employee.cutiAlasanPenting || 0) + 
+                               (employee.cutiSakit || 0) + (employee.cutiMelahirkan || 0) + (employee.cutiDiluarTanggungan || 0);
+                
+                // Determine photo display
+                let photoDisplay = '';
+                if (employee.photoData) {
+                    // Show uploaded photo
+                    photoDisplay = `<img src="${employee.photoData}" class="w-16 h-16 rounded-full object-cover mx-auto">`;
+                } else {
+                    // Show emoji
+                    photoDisplay = `<div class="text-6xl mb-4">${employee.photo || '👨‍💼'}</div>`;
+                }
+                
+                return `
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover cursor-pointer border-l-4 border-blue-500 relative">
+                        ${isAdminMode ? `
+                            <button onclick="deleteEmployee('${employee.id}')" class="absolute top-3 right-3 text-red-500 hover:text-red-700 text-lg">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button onclick="editEmployee('${employee.id}')" class="absolute top-3 right-10 text-blue-500 hover:text-blue-700 text-lg">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        ` : ''}
+                        <div onclick="showEmployeeDetail('${employee.id}')" class="text-center">
+                            ${photoDisplay}
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">${employee.name}</h3>
+                            <p class="text-sm text-gray-600 mb-1">NIP: ${employee.nip}</p>
+                            <p class="text-sm text-gray-600 mb-3">${employee.position}</p>
+                            <div class="bg-blue-50 rounded-lg p-3">
+                                <p class="text-sm text-gray-600">Total Cuti Terpakai</p>
+                                <p class="text-2xl font-bold text-blue-600">${totalCuti} hari</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Show employee detail modal
+        function showEmployeeDetail(employeeId) {
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (!employee) return;
+
+            const cutiTypes = [
+                { label: 'Cuti Tahunan Terpakai', value: employee.cutiTahunan || 0, icon: 'fas fa-calendar-check', color: 'blue' },
+                { label: 'Cuti Besar Terpakai', value: employee.cutiBesar || 0, icon: 'fas fa-calendar-plus', color: 'green' },
+                { label: 'Cuti Alasan Penting Terpakai', value: employee.cutiAlasanPenting || 0, icon: 'fas fa-exclamation-circle', color: 'yellow' },
+                { label: 'Cuti Sakit Terpakai', value: employee.cutiSakit || 0, icon: 'fas fa-user-injured', color: 'red' },
+                { label: 'Cuti Melahirkan Terpakai', value: employee.cutiMelahirkan || 0, icon: 'fas fa-baby', color: 'pink' },
+                { label: 'Cuti Diluar Tanggungan Negara Terpakai', value: employee.cutiDiluarTanggungan || 0, icon: 'fas fa-plane', color: 'purple' }
+            ];
+
+            // Determine photo display for modal
+            let modalPhotoDisplay = '';
+            if (employee.photoData) {
+                modalPhotoDisplay = `<img src="${employee.photoData}" class="w-24 h-24 rounded-full object-cover mx-auto">`;
+            } else {
+                modalPhotoDisplay = `<div class="text-6xl mb-4">${employee.photo || '👨‍💼'}</div>`;
+            }
+
+            const modalContent = `
+                <div class="text-center mb-6">
+                    ${modalPhotoDisplay}
+                    <h3 class="text-xl font-bold text-gray-800">${employee.name}</h3>
+                    <p class="text-gray-600">NIP: ${employee.nip}</p>
+                    <p class="text-gray-600">${employee.position}</p>
+                </div>
+                
+                <div class="space-y-4">
+                    ${cutiTypes.map((type, index) => {
+                        const narasiKey = type.label.toLowerCase().replace(/\s+/g, '').replace('terpakai', '');
+                        const currentNarasi = employee.narasi ? employee.narasi[narasiKey] || '' : '';
+                        return `
+                        <div class="bg-${type.color}-50 rounded-lg border border-${type.color}-200">
+                            <div class="flex items-center justify-between p-4 cursor-pointer" onclick="toggleNarasi('narasi-${employee.id}-${index}')">
+                                <div class="flex items-center space-x-3">
+                                    <i class="${type.icon} text-${type.color}-600 text-xl"></i>
+                                    <span class="font-medium text-gray-800">${type.label}</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    ${isAdminMode ? `
+                                        <input type="number" 
+                                               value="${type.value}" 
+                                               min="0" 
+                                               class="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-${type.color}-500"
+                                               onchange="updateCutiValue('${employee.id}', '${narasiKey}', this.value)"
+                                               onclick="event.stopPropagation()">
+                                    ` : `
+                                        <span class="text-2xl font-bold text-${type.color}-600">${type.value} hari</span>
+                                    `}
+                                    <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-200" id="chevron-${employee.id}-${index}"></i>
+                                </div>
+                            </div>
+                            <div id="narasi-${employee.id}-${index}" class="hidden px-4 pb-4">
+                                <div class="bg-white rounded-lg p-3 border-l-4 border-${type.color}-400">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Narasi/Keterangan:</label>
+                                    ${isAdminMode ? `
+                                        <textarea 
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-${type.color}-500 resize-none"
+                                            rows="3"
+                                            placeholder="Masukkan keterangan untuk ${type.label.toLowerCase()}..."
+                                            onchange="updateNarasi('${employee.id}', '${narasiKey}', this.value)"
+                                        >${currentNarasi}</textarea>
+                                    ` : `
+                                        <p class="text-gray-700 text-sm ${currentNarasi ? '' : 'italic text-gray-500'}">${currentNarasi || 'Belum ada keterangan'}</p>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    }).join('')}
+                </div>
+                
+                <div class="mt-6 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center justify-between p-4 cursor-pointer" onclick="toggleNarasi('narasi-total-${employee.id}')">
+                        <span class="font-semibold text-gray-800">Total Cuti Terpakai:</span>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl font-bold text-blue-600">${cutiTypes.reduce((sum, type) => sum + type.value, 0)} hari</span>
+                            <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-200" id="chevron-total-${employee.id}"></i>
+                        </div>
+                    </div>
+                    <div id="narasi-total-${employee.id}" class="hidden px-4 pb-4">
+                        <div class="bg-white rounded-lg p-3 border-l-4 border-blue-400">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ringkasan Total Cuti:</label>
+                            ${isAdminMode ? `
+                                <textarea 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                    rows="3"
+                                    placeholder="Masukkan ringkasan total penggunaan cuti..."
+                                    onchange="updateNarasi('${employee.id}', 'totalCuti', this.value)"
+                                >${employee.narasi ? employee.narasi.totalCuti || '' : ''}</textarea>
+                            ` : `
+                                <p class="text-gray-700 text-sm ${employee.narasi && employee.narasi.totalCuti ? '' : 'italic text-gray-500'}">${employee.narasi && employee.narasi.totalCuti ? employee.narasi.totalCuti : 'Belum ada ringkasan'}</p>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modalContent').innerHTML = modalContent;
+            document.getElementById('employeeModal').classList.remove('hidden');
+        }
+
+        // Toggle narasi visibility
+        function toggleNarasi(narasiId) {
+            const narasiElement = document.getElementById(narasiId);
+            const chevronId = narasiId.replace('narasi-', 'chevron-');
+            const chevronElement = document.getElementById(chevronId);
+            
+            if (narasiElement.classList.contains('hidden')) {
+                narasiElement.classList.remove('hidden');
+                chevronElement.style.transform = 'rotate(180deg)';
+            } else {
+                narasiElement.classList.add('hidden');
+                chevronElement.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Update narasi
+        async function updateNarasi(employeeId, narasiType, value) {
+            if (!isAdminMode) return;
+            
+            try {
+                const { doc, updateDoc } = window.firebaseServices;
+                const employeeRef = doc(window.firebaseDb, 'employees', employeeId);
+                
+                await updateDoc(employeeRef, {
+                    [`narasi.${narasiType}`]: value
+                });
+                
+                showNotification('Narasi berhasil diperbarui', 'success');
+            } catch (error) {
+                console.error('Error updating narasi:', error);
+                showNotification('Gagal memperbarui narasi', 'error');
+            }
+        }
+
+        // Update cuti value
+        async function updateCutiValue(employeeId, cutiType, value) {
+            if (!isAdminMode) return;
+            
+            try {
+                const { doc, updateDoc } = window.firebaseServices;
+                const employeeRef = doc(window.firebaseDb, 'employees', employeeId);
+                
+                const fieldMap = {
+                    'cutitahunterpakai': 'cutiTahunan',
+                    'cutibesar': 'cutiBesar',
+                    'cutialasanpenting': 'cutiAlasanPenting',
+                    'cutisakit': 'cutiSakit',
+                    'cutimelahirkan': 'cutiMelahirkan',
+                    'cutiluartanggungannegara': 'cutiDiluarTanggungan'
+                };
+
+                const field = fieldMap[cutiType];
+                if (field) {
+                    await updateDoc(employeeRef, {
+                        [field]: parseInt(value) || 0
+                    });
+                    
+                    showNotification('Data cuti berhasil diperbarui', 'success');
+                }
+            } catch (error) {
+                console.error('Error updating cuti value:', error);
+                showNotification('Gagal memperbarui data cuti', 'error');
+            }
+        }
+
+        // Show add employee form
+        function showAddEmployeeForm() {
+            if (!isAdminMode) return;
+            
+            editingEmployeeId = null;
+            currentPhotoData = null;
+            document.getElementById('formModalTitle').textContent = 'Tambah Pegawai';
+            document.getElementById('employeeForm').reset();
+            document.getElementById('photo1').checked = true;
+            document.getElementById('photoUpload').value = '';
+            
+            // Reset photo preview
+            const preview = document.getElementById('photoPreview');
+            const content = document.getElementById('photoPreviewContent');
+            const existingImg = preview.querySelector('img');
+            if (existingImg) {
+                existingImg.remove();
+            }
+            content.textContent = '👨‍💼';
+            
+            document.getElementById('employeeFormModal').classList.remove('hidden');
+        }
+
+        // Edit employee
+        function editEmployee(employeeId) {
+            if (!isAdminMode) return;
+            
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (!employee) return;
+
+            editingEmployeeId = employeeId;
+            currentPhotoData = employee.photoData || null;
+            
+            document.getElementById('formModalTitle').textContent = 'Edit Pegawai';
+            document.getElementById('employeeName').value = employee.name;
+            document.getElementById('employeeNIP').value = employee.nip;
+            document.getElementById('employeePosition').value = employee.position;
+            
+            // Set photo
+            if (employee.photoData) {
+                // Show uploaded photo
+                updatePhotoPreview(employee.photoData, true);
+                document.getElementById('photoUpload').value = '';
+                
+                // Clear emoji selection
+                const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
+                photoRadios.forEach(radio => radio.checked = false);
+            } else {
+                // Show emoji
+                const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
+                photoRadios.forEach(radio => {
+                    if (radio.value === employee.photo) {
+                        radio.checked = true;
+                    }
+                });
+                updatePhotoPreview();
+            }
+            
+            document.getElementById('employeeFormModal').classList.remove('hidden');
+        }
+
+        // Handle employee form submission
+        async function handleEmployeeSubmit(e) {
+            e.preventDefault();
+            
+            if (!isAdminMode) return;
+            
+            const name = document.getElementById('employeeName').value;
+            const nip = document.getElementById('employeeNIP').value;
+            const position = document.getElementById('employeePosition').value;
+            
+            let photo = '';
+            let photoData = null;
+            
+            if (currentPhotoData) {
+                // Use uploaded photo
+                photoData = currentPhotoData;
+                photo = ''; // Clear emoji
+            } else {
+                // Use selected emoji
+                const selectedPhoto = document.querySelector('input[name="employeePhoto"]:checked');
+                if (!selectedPhoto) {
+                    alert('Silakan pilih foto pegawai atau upload gambar');
+                    return;
+                }
+                photo = selectedPhoto.value;
+            }
+            
+            const submitBtn = document.getElementById('employeeSubmitBtn');
+            const submitText = submitBtn.querySelector('.submit-text');
+            const submitSpinner = submitBtn.querySelector('.submit-spinner');
+            
+            // Show loading state
+            submitText.classList.add('hidden');
+            submitSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const { collection, addDoc, doc, updateDoc } = window.firebaseServices;
+                
+                const employeeData = {
+                    name,
+                    nip,
+                    position,
+                    photo,
+                    photoData,
+                    updatedAt: new Date()
+                };
+                
+                if (editingEmployeeId) {
+                    // Edit existing employee
+                    const employeeRef = doc(window.firebaseDb, 'employees', editingEmployeeId);
+                    await updateDoc(employeeRef, employeeData);
+                    
+                    showNotification('Pegawai berhasil diperbarui', 'success');
+                } else {
+                    // Add new employee
+                    const newEmployee = {
+                        ...employeeData,
+                        cutiTahunan: 0,
+                        cutiBesar: 0,
+                        cutiAlasanPenting: 0,
+                        cutiSakit: 0,
+                        cutiMelahirkan: 0,
+                        cutiDiluarTanggungan: 0,
+                        narasi: {
+                            cutiTahunan: '',
+                            cutiBesar: '',
+                            cutiAlasanPenting: '',
+                            cutiSakit: '',
+                            cutiMelahirkan: '',
+                            cutiDiluarTanggungan: '',
+                            totalCuti: ''
+                        },
+                        createdAt: new Date()
+                    };
+                    
+                    await addDoc(collection(window.firebaseDb, 'employees'), newEmployee);
+                    showNotification('Pegawai berhasil ditambahkan', 'success');
+                }
+
+                closeFormModal();
+            } catch (error) {
+                console.error('Error saving employee:', error);
+                showNotification('Gagal menyimpan data pegawai', 'error');
+            } finally {
+                // Hide loading state
+                submitText.classList.remove('hidden');
+                submitSpinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Delete employee
+        async function deleteEmployee(employeeId) {
+            if (!isAdminMode) return;
+            
+            if (confirm('Apakah Anda yakin ingin menghapus pegawai ini?')) {
+                try {
+                    const { doc, deleteDoc } = window.firebaseServices;
+                    await deleteDoc(doc(window.firebaseDb, 'employees', employeeId));
+                    showNotification('Pegawai berhasil dihapus', 'success');
+                } catch (error) {
+                    console.error('Error deleting employee:', error);
+                    showNotification('Gagal menghapus pegawai', 'error');
+                }
+            }
+        }
+
+        // Close modals
+        function closeEmployeeModal() {
+            document.getElementById('employeeModal').classList.add('hidden');
+        }
+
+        function closeFormModal() {
+            document.getElementById('employeeFormModal').classList.add('hidden');
+            editingEmployeeId = null;
+            currentPhotoData = null;
+        }
+
+        // Sync data
+        function syncData() {
+            if (!isAdminMode) return;
+            
+            showNotification('Menyinkronkan data...', 'info');
+            loadLeaveData();
+            setTimeout(() => {
+                showNotification('Data berhasil disinkronkan', 'success');
+            }, 2000);
+        }
+
+        // Debug spreadsheet data
+        function debugSpreadsheet() {
+            if (!isAdminMode) return;
+            
+            console.log('=== DEBUG SPREADSHEET DATA ===');
+            console.log('Total records:', leaveData.length);
+            
+            if (leaveData.length > 0) {
+                console.log('First record:', leaveData[0]);
+                console.log('All column names:', Object.keys(leaveData[0]));
+                
+                // Show sample data in a modal
+                const debugInfo = `
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold">Debug Info Spreadsheet</h3>
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <p><strong>Total Records:</strong> ${leaveData.length}</p>
+                            <p><strong>Kolom yang Ditemukan:</strong></p>
+                            <ul class="list-disc list-inside text-sm">
+                                ${Object.keys(leaveData[0] || {}).map(key => `<li>${key}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ${leaveData.length > 0 ? `
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <p><strong>Sample Data (Record 1):</strong></p>
+                                <pre class="text-xs bg-white p-2 rounded mt-2 overflow-auto max-h-40">${JSON.stringify(leaveData[0], null, 2)}</pre>
+                            </div>
+                        ` : ''}
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <p class="text-sm"><strong>Tips:</strong></p>
+                            <ul class="text-xs list-disc list-inside">
+                                <li>Pastikan spreadsheet sudah dipublikasi dengan akses "Anyone with the link"</li>
+                                <li>Kolom tanggal harus berformat DD/MM/YYYY atau YYYY-MM-DD</li>
+                                <li>Nama kolom harus konsisten (Nama Pegawai, Tanggal Mulai Cuti, dll)</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('modalContent').innerHTML = debugInfo;
+                document.getElementById('employeeModal').classList.remove('hidden');
+            } else {
+                showNotification('Tidak ada data spreadsheet untuk di-debug', 'error');
+            }
+        }
+
+        // Export data to Excel
+        function exportToExcel() {
+            if (!isAdminMode) return;
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            const headers = [
+                "No",
+                "Nama Pegawai", 
+                "NIP", 
+                "Jabatan",
+                "Cuti Tahunan (hari)",
+                "Cuti Besar (hari)",
+                "Cuti Alasan Penting (hari)",
+                "Cuti Sakit (hari)",
+                "Cuti Melahirkan (hari)",
+                "Cuti Diluar Tanggungan (hari)",
+                "Total Cuti (hari)",
+                "Keterangan Cuti Tahunan",
+                "Keterangan Cuti Besar",
+                "Keterangan Cuti Alasan Penting",
+                "Keterangan Cuti Sakit",
+                "Keterangan Cuti Melahirkan",
+                "Keterangan Cuti Diluar Tanggungan",
+                "Ringkasan Total Cuti"
+            ];
+            
+            csvContent += headers.join(",") + "\n";
+            
+            employees.forEach((employee, index) => {
+                const totalCuti = (employee.cutiTahunan || 0) + (employee.cutiBesar || 0) + (employee.cutiAlasanPenting || 0) + 
+                               (employee.cutiSakit || 0) + (employee.cutiMelahirkan || 0) + (employee.cutiDiluarTanggungan || 0);
+                
+                const row = [
+                    index + 1,
+                    `"${employee.name}"`,
+                    `"${employee.nip}"`,
+                    `"${employee.position}"`,
+                    employee.cutiTahunan || 0,
+                    employee.cutiBesar || 0,
+                    employee.cutiAlasanPenting || 0,
+                    employee.cutiSakit || 0,
+                    employee.cutiMelahirkan || 0,
+                    employee.cutiDiluarTanggungan || 0,
+                    totalCuti,
+                    `"${employee.narasi ? employee.narasi.cutiTahunan || '' : ''}"`,
+                    `"${employee.narasi ? employee.narasi.cutiBesar || '' : ''}"`,
+                    `"${employee.narasi ? employee.narasi.cutiAlasanPenting || '' : ''}"`,
+                    `"${employee.narasi ? employee.narasi.cutiSakit || '' : ''}"`,
+                    `"${employee.narasi ? employee.narasi.cutiMelahirkan || '' : ''}"`,
+                    `"${employee.narasi ? employee.narasi.cutiDiluarTanggungan || '' : ''}"`,
+                    `"${employee.narasi ? employee.narasi.totalCuti || '' : ''}"`
+                ];
+                
+                csvContent += row.join(",") + "\n";
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            const filename = `Data_Cuti_Pegawai_RRI_Sibolga_${dateStr}_${timeStr}.csv`;
+            
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Data berhasil diekspor ke file Excel!', 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg text-white transform translate-x-full transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 
+                'bg-blue-500'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        'fa-info-circle'
+                    }"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(full)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Make functions globally available
+        window.toggleNarasi = toggleNarasi;
+        window.updateNarasi = updateNarasi;
+        window.updateCutiValue = updateCutiValue;
+        window.showEmployeeDetail = showEmployeeDetail;
+        window.editEmployee = editEmployee;
+        window.deleteEmployee = deleteEmployee;
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98091cf534609e2c',t:'MTc1ODExNzQ1MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
