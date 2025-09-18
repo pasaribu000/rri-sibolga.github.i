@@ -6,9 +6,6 @@
     <title>Layanan Informasi Cuti</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Cropper.js for image editing -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     
     <!-- Firebase SDK -->
     <script type="module">
@@ -59,31 +56,182 @@
     </script>
     
     <style>
+        /* Modern Animations & Transitions */
         .card-hover {
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .card-hover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .card-hover:hover::before {
+            left: 100%;
         }
         .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1);
         }
+        
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        /* Gradient Backgrounds */
+        .gradient-bg-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .gradient-bg-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .gradient-bg-3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .gradient-bg-4 {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .gradient-bg-5 {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .gradient-bg-6 {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        
+        /* Glass Morphism Effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        /* Pulse Animation for Stats */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6); }
+        }
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        /* Modern Button Styles */
+        .btn-modern {
+            position: relative;
+            overflow: hidden;
+            transform: perspective(1px) translateZ(0);
+        }
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        .btn-modern:hover::before {
+            transform: translateX(100%);
+        }
+        
+        /* Photo Avatar Styles */
+        .avatar-ring {
+            position: relative;
+        }
+        .avatar-ring::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c);
+            border-radius: 50%;
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Grid Improvements */
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        @media (max-width: 640px) {
+            .responsive-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+        
+        /* Mobile-First Improvements */
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column !important;
+                space-x: 0 !important;
+            }
+            .mobile-stack > * {
+                margin-bottom: 0.75rem;
+            }
+            .mobile-stack > *:last-child {
+                margin-bottom: 0;
+            }
+            .mobile-full {
+                width: 100% !important;
+            }
+            .mobile-text-center {
+                text-align: center !important;
+            }
+        }
+        
+        /* Enhanced Modal Styles */
         .modal {
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.6);
         }
         .fade-in {
-            animation: fadeIn 0.3s ease-in;
+            animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+        @keyframes fadeInScale {
+            from { 
+                opacity: 0; 
+                transform: scale(0.8) translateY(20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1) translateY(0);
+            }
         }
+        
+        /* Interactive Elements */
         input[type="radio"]:checked + label {
-            background-color: #3b82f6 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             color: white;
             transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
+        
+        /* Loading Animations */
         .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top: 3px solid #3b82f6;
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -93,43 +241,80 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Enhanced Photo Preview */
         .photo-preview {
             width: 96px;
             height: 96px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid #e5e7eb;
+            border: 4px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                       linear-gradient(45deg, #667eea, #764ba2) border-box;
         }
-        .cropper-container {
-            max-height: 400px;
+        
+        /* Crop Box Styles */
+        #cropBox {
+            pointer-events: auto;
+            user-select: none;
+            border: 2px dashed #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
         }
-        .crop-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
+        #cropBox:hover {
+            border-color: #1d4ed8;
+            background: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
-        .crop-controls button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
+        #cropCanvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
         }
-        .crop-controls .btn-primary {
-            background-color: #3b82f6;
-            color: white;
+
+        /* High Z-Index for Modals */
+        .image-editor-modal {
+            z-index: 10000 !important;
         }
-        .crop-controls .btn-primary:hover {
-            background-color: #2563eb;
+        
+        /* Scroll Animations */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
         }
-        .crop-controls .btn-secondary {
-            background-color: #6b7280;
-            color: white;
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
         }
-        .crop-controls .btn-secondary:hover {
-            background-color: #4b5563;
+        
+        /* Status Indicators */
+        .status-indicator {
+            position: relative;
+        }
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border: 2px solid white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            .dark-mode-card {
+                background: rgba(31, 41, 55, 0.8);
+                border-color: rgba(75, 85, 99, 0.3);
+            }
         }
     </style>
 </head>
@@ -143,35 +328,76 @@
     </div>
 
     <!-- Header -->
-    <header class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 shadow-xl border-b-4 border-yellow-400">
-        <div class="container mx-auto px-6 py-6">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <div class="bg-white rounded-full p-3 shadow-lg">
-                        <i class="fas fa-radio text-3xl text-red-600"></i>
+    <header class="relative bg-gradient-to-r from-red-600 via-red-700 to-red-800 shadow-2xl border-b-4 border-yellow-400 overflow-hidden">
+        <!-- Animated Background Pattern -->
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-0 left-0 w-full h-full">
+                <div class="float-animation absolute top-4 left-10 w-8 h-8 bg-white rounded-full opacity-20"></div>
+                <div class="float-animation absolute top-12 right-20 w-6 h-6 bg-yellow-300 rounded-full opacity-30" style="animation-delay: -2s;"></div>
+                <div class="float-animation absolute bottom-8 left-1/4 w-4 h-4 bg-white rounded-full opacity-25" style="animation-delay: -4s;"></div>
+                <div class="float-animation absolute bottom-4 right-1/3 w-5 h-5 bg-yellow-300 rounded-full opacity-20" style="animation-delay: -1s;"></div>
+            </div>
+        </div>
+        
+        <div class="container mx-auto px-6 py-6 relative z-10">
+            <div class="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
+                <!-- Logo & Title Section -->
+                <div class="flex items-center space-x-4 mobile-text-center">
+                    <div class="relative">
+                        <div class="bg-white rounded-full p-4 shadow-2xl pulse-glow">
+                            <i class="fas fa-radio text-4xl text-red-600"></i>
+                        </div>
+                        <div class="status-indicator"></div>
                     </div>
-                    <div>
-                        <h1 class="text-3xl font-bold text-white">Cutiku RRI Sibolga</h1>
-                        <p class="text-red-100 text-sm">Sistem Informasi Cuti Pegawai</p>
+                    <div class="text-center lg:text-left">
+                        <h1 class="text-3xl lg:text-4xl font-bold text-white tracking-wide">
+                            cutiku RRI Sibolga
+                        </h1>
+                        <p class="text-red-100 text-sm lg:text-base font-medium">
+                            🎯 Sistem Informasi Cuti Pegawai Modern
+                        </p>
+                        <div class="flex items-center justify-center lg:justify-start space-x-2 mt-1">
+                            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            <span class="text-xs text-red-200">Online & Real-time</span>
+                        </div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div id="userInfo" class="hidden text-red-100 text-sm">
-                        <span id="userEmail"></span>
+                
+                <!-- Controls Section -->
+                <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 mobile-stack">
+                    <!-- User Info -->
+                    <div id="userInfo" class="hidden glass-card px-4 py-2 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <span id="userEmail" class="text-white text-sm font-medium"></span>
+                        </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-red-100">Mode:</span>
-                        <button id="modeToggle" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-lg">
+                    
+                    <!-- Mode Toggle -->
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-red-100 font-medium hidden sm:block">Mode:</span>
+                        <button id="modeToggle" class="btn-modern bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl transition-all duration-300 flex items-center space-x-2 shadow-lg transform hover:scale-105 mobile-full">
                             <i class="fas fa-user"></i>
                             <span id="modeText">Pengguna</span>
                         </button>
                     </div>
-                    <button id="logoutBtn" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 shadow-lg">
+                    
+                    <!-- Logout Button -->
+                    <button id="logoutBtn" class="hidden btn-modern bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-300 flex items-center space-x-2 shadow-lg transform hover:scale-105 mobile-full">
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Keluar</span>
                     </button>
                 </div>
             </div>
+        </div>
+        
+        <!-- Bottom Wave Effect -->
+        <div class="absolute bottom-0 left-0 w-full overflow-hidden">
+            <svg class="relative block w-full h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="rgba(255,255,255,0.1)"></path>
+            </svg>
         </div>
     </header>
 
@@ -180,42 +406,55 @@
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Total Pegawai -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-                <div class="flex items-center justify-between">
+            <div class="scroll-reveal bg-white rounded-2xl shadow-xl p-6 border-l-4 border-transparent bg-gradient-to-br from-blue-50 to-blue-100 card-hover relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-20 h-20 gradient-bg-3 rounded-full -mr-10 -mt-10 opacity-20"></div>
+                <div class="flex items-center justify-between relative z-10">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Total Pegawai</h3>
-                        <p class="text-3xl font-bold text-blue-600" id="totalEmployees">0</p>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                            <span class="w-3 h-3 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+                            Total Pegawai
+                        </h3>
+                        <p class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent" id="totalEmployees">0</p>
+                        <p class="text-sm text-gray-600 mt-1">👥 Pegawai terdaftar</p>
                     </div>
-                    <div class="bg-blue-100 rounded-full p-4">
-                        <i class="fas fa-users text-2xl text-blue-600"></i>
+                    <div class="gradient-bg-3 rounded-2xl p-4 shadow-lg transform hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-users text-3xl text-white"></i>
                     </div>
                 </div>
             </div>
             
             <!-- Jenis Cuti Terbanyak -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
-                <div class="flex items-center justify-between">
+            <div class="scroll-reveal bg-white rounded-2xl shadow-xl p-6 border-l-4 border-transparent bg-gradient-to-br from-orange-50 to-orange-100 card-hover relative overflow-hidden" style="animation-delay: 0.1s;">
+                <div class="absolute top-0 right-0 w-20 h-20 gradient-bg-5 rounded-full -mr-10 -mt-10 opacity-20"></div>
+                <div class="flex items-center justify-between relative z-10">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Jenis Cuti Terbanyak</h3>
-                        <p class="text-xl font-bold text-orange-600" id="mostUsedLeaveType">-</p>
-                        <p class="text-2xl font-bold text-orange-600" id="mostUsedLeaveCount">0 hari</p>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                            <span class="w-3 h-3 bg-orange-500 rounded-full mr-2 animate-pulse"></span>
+                            Jenis Cuti Terbanyak
+                        </h3>
+                        <p class="text-lg font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent" id="mostUsedLeaveType">-</p>
+                        <p class="text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent" id="mostUsedLeaveCount">0 hari</p>
                     </div>
-                    <div class="bg-orange-100 rounded-full p-4">
-                        <i class="fas fa-chart-bar text-2xl text-orange-600"></i>
+                    <div class="gradient-bg-5 rounded-2xl p-4 shadow-lg transform hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-chart-bar text-3xl text-white"></i>
                     </div>
                 </div>
             </div>
 
             <!-- Pegawai Cuti Hari Ini -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-                <div class="flex items-center justify-between">
+            <div class="scroll-reveal bg-white rounded-2xl shadow-xl p-6 border-l-4 border-transparent bg-gradient-to-br from-green-50 to-green-100 card-hover relative overflow-hidden" style="animation-delay: 0.2s;">
+                <div class="absolute top-0 right-0 w-20 h-20 gradient-bg-4 rounded-full -mr-10 -mt-10 opacity-20"></div>
+                <div class="flex items-center justify-between relative z-10">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Pegawai Cuti Hari Ini</h3>
-                        <p class="text-3xl font-bold text-green-600" id="todayLeaveCount">0</p>
-                        <p class="text-sm text-gray-600" id="todayLeaveNames">Memuat data...</p>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                            <span class="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                            Pegawai Cuti Hari Ini
+                        </h3>
+                        <p class="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent" id="todayLeaveCount">0</p>
+                        <p class="text-sm text-gray-600 mt-1" id="todayLeaveNames">📅 Memuat data...</p>
                     </div>
-                    <div class="bg-green-100 rounded-full p-4">
-                        <i class="fas fa-calendar-day text-2xl text-green-600"></i>
+                    <div class="gradient-bg-4 rounded-2xl p-4 shadow-lg transform hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-calendar-day text-3xl text-white"></i>
                     </div>
                 </div>
             </div>
@@ -224,71 +463,84 @@
         <!-- Search and Action Controls -->
         <div class="mb-8 space-y-6">
             <!-- Search Bar -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                    <div class="flex-1 max-w-md">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-search mr-2 text-blue-600"></i>
-                            Cari Pegawai
+            <div class="scroll-reveal glass-card rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-white/20" style="animation-delay: 0.3s;">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-6 lg:space-y-0 lg:space-x-6">
+                    <!-- Search Section -->
+                    <div class="flex-1 max-w-lg">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                            <div class="w-8 h-8 gradient-bg-3 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-search text-white text-sm"></i>
+                            </div>
+                            🔍 Cari Pegawai
                         </label>
-                        <input 
-                            type="text" 
-                            id="searchInput" 
-                            placeholder="Masukkan nama pegawai..." 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                placeholder="Ketik nama, NIP, atau jabatan..." 
+                                class="w-full px-5 py-4 pl-12 bg-white/80 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 shadow-inner"
+                            >
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mobile-stack">
                         <a 
-                            href="https://forms.gle/hwU3i686uiYVPeTx9" 
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSfh0_-PQxHlgN8MPIGwVN0YBfwO9EMQxQ92cEAb818g5DloZg/viewform?usp=header" 
                             target="_blank"
-                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg"
+                            class="btn-modern gradient-bg-4 hover:shadow-2xl text-white px-8 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-105 mobile-full"
                         >
-                            <i class="fas fa-paper-plane"></i>
-                            <span>Ajukan Cuti</span>
+                            <i class="fas fa-paper-plane text-lg"></i>
+                            <span class="font-semibold">📝 Ajukan Cuti</span>
                         </a>
                         
                         <a 
                             href="https://drive.google.com/drive/folders/1K3HrgnSCTvUbxoYY5fK4XI1cvo4WxANS?usp=sharing" 
                             target="_blank"
-                            class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-lg"
+                            class="btn-modern gradient-bg-1 hover:shadow-2xl text-white px-8 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-105 mobile-full"
                         >
-                            <i class="fas fa-download"></i>
-                            <span>Unduh Berkas</span>
+                            <i class="fas fa-download text-lg"></i>
+                            <span class="font-semibold">📁 Unduh Berkas</span>
                         </a>
                     </div>
                 </div>
             </div>
 
             <!-- Admin Controls -->
-            <div id="adminControls" class="hidden">
-                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                        <i class="fas fa-cog mr-2 text-green-600"></i>
-                        Panel Admin
+            <div id="adminControls" class="hidden scroll-reveal" style="animation-delay: 0.4s;">
+                <div class="glass-card rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-white/20 bg-gradient-to-r from-green-50/50 to-emerald-50/50">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <div class="w-10 h-10 gradient-bg-4 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                            <i class="fas fa-cog text-white text-lg"></i>
+                        </div>
+                        🛠️ Panel Admin
+                        <div class="ml-3 px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                            ADMIN MODE
+                        </div>
                     </h2>
-                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                        <button id="addEmployeeBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                            <i class="fas fa-plus"></i>
-                            <span>Tambah Pegawai</span>
+                    <div class="responsive-grid">
+                        <button id="addEmployeeBtn" class="btn-modern gradient-bg-4 hover:shadow-xl text-white px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 transform hover:scale-105">
+                            <i class="fas fa-plus text-lg"></i>
+                            <span class="font-semibold">➕ Tambah Pegawai</span>
                         </button>
-                        <button id="exportDataBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                            <i class="fas fa-file-excel"></i>
-                            <span>Ekspor ke Excel</span>
+                        <button id="exportDataBtn" class="btn-modern gradient-bg-3 hover:shadow-xl text-white px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 transform hover:scale-105">
+                            <i class="fas fa-file-excel text-lg"></i>
+                            <span class="font-semibold">📊 Ekspor Excel</span>
                         </button>
-                        <button id="syncDataBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                            <i class="fas fa-sync"></i>
-                            <span>Sinkronisasi Data</span>
+                        <button id="syncDataBtn" class="btn-modern gradient-bg-1 hover:shadow-xl text-white px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 transform hover:scale-105">
+                            <i class="fas fa-sync text-lg"></i>
+                            <span class="font-semibold">🔄 Sinkronisasi</span>
                         </button>
-                        <button id="debugSpreadsheetBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                            <i class="fas fa-bug"></i>
-                            <span>Debug Spreadsheet</span>
+                        <button id="debugSpreadsheetBtn" class="btn-modern gradient-bg-5 hover:shadow-xl text-white px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 transform hover:scale-105">
+                            <i class="fas fa-bug text-lg"></i>
+                            <span class="font-semibold">🐛 Debug Sheet</span>
                         </button>
-                        <button id="testFirestoreBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                            <i class="fas fa-database"></i>
-                            <span>Test Database</span>
+                        <button id="testFirestoreBtn" class="btn-modern gradient-bg-2 hover:shadow-xl text-white px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 transform hover:scale-105">
+                            <i class="fas fa-database text-lg"></i>
+                            <span class="font-semibold">🗄️ Test Database</span>
                         </button>
                     </div>
                 </div>
@@ -296,14 +548,25 @@
         </div>
 
         <!-- Employee Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="employeeGrid">
+        <div class="responsive-grid" id="employeeGrid">
             <!-- Employee cards will be dynamically generated here -->
         </div>
 
         <!-- No Data Message -->
-        <div id="noDataMessage" class="hidden text-center py-12">
-            <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
-            <p class="text-gray-500 text-lg">Belum ada data pegawai</p>
+        <div id="noDataMessage" class="hidden text-center py-16">
+            <div class="scroll-reveal">
+                <div class="w-32 h-32 mx-auto mb-6 gradient-bg-6 rounded-full flex items-center justify-center shadow-2xl">
+                    <i class="fas fa-users text-5xl text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-600 mb-2">Belum Ada Data Pegawai</h3>
+                <p class="text-gray-500 text-lg mb-6">Mulai dengan menambahkan pegawai pertama</p>
+                <div class="flex justify-center">
+                    <button onclick="document.getElementById('addEmployeeBtn')?.click()" class="btn-modern gradient-bg-4 text-white px-8 py-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <i class="fas fa-plus mr-2"></i>
+                        Tambah Pegawai Pertama
+                    </button>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -362,6 +625,81 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Editor Modal - HIGHEST Z-INDEX -->
+    <div id="imageEditorModal" class="hidden fixed inset-0 bg-black bg-opacity-75 image-editor-modal flex items-center justify-center p-4" style="z-index: 10000;">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full fade-in max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-crop mr-2 text-blue-600"></i>
+                        Edit Foto Pegawai
+                    </h2>
+                    <button onclick="closeImageEditor()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Canvas Container -->
+                    <div class="relative bg-gray-100 rounded-lg p-4 flex justify-center">
+                        <div class="relative inline-block">
+                            <canvas id="cropCanvas" class="border border-gray-300 rounded-lg max-w-full"></canvas>
+                            
+                            <!-- Crop Overlay -->
+                            <div id="cropOverlay" class="absolute inset-0 pointer-events-none">
+                                <!-- Crop Box -->
+                                <div id="cropBox" class="absolute border-2 border-blue-500 bg-blue-500 bg-opacity-20 cursor-move" style="left: 50px; top: 50px; width: 150px; height: 150px;">
+                                    <!-- Corner handles -->
+                                    <div class="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full"></div>
+                                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full"></div>
+                                    <div class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 rounded-full"></div>
+                                    <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full"></div>
+                                    
+                                    <!-- Center crosshair -->
+                                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-600">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Instructions -->
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-info-circle text-blue-600 mt-1"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium mb-1">Cara menggunakan editor:</p>
+                                <ul class="list-disc list-inside space-y-1 text-xs">
+                                    <li>Seret kotak biru untuk memposisikan area yang akan dipotong</li>
+                                    <li>Area dalam kotak biru akan menjadi foto profil pegawai</li>
+                                    <li>Foto akan otomatis diubah menjadi ukuran 200x200 pixel</li>
+                                    <li>Klik "Potong & Simpan" untuk menyelesaikan</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-3 pt-4">
+                        <button onclick="resetCropArea()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                            <i class="fas fa-undo"></i>
+                            <span>Reset Posisi</span>
+                        </button>
+                        <button onclick="cropAndSaveImage()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                            <i class="fas fa-crop"></i>
+                            <span>Potong & Simpan</span>
+                        </button>
+                        <button onclick="closeImageEditor()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                            <i class="fas fa-times"></i>
+                            <span>Batal</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -477,47 +815,6 @@
         </div>
     </div>
 
-    <!-- Image Crop Modal -->
-    <div id="imageCropModal" class="hidden fixed inset-0 bg-black bg-opacity-75 modal z-60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full fade-in">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-crop mr-2 text-blue-600"></i>
-                        Edit Foto Pegawai
-                    </h2>
-                    <button id="closeCropModal" class="text-gray-400 hover:text-gray-600 text-2xl">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <div class="mb-4">
-                    <div id="cropperContainer" class="max-h-96 overflow-hidden rounded-lg border border-gray-300">
-                        <img id="cropperImage" class="max-w-full">
-                    </div>
-                </div>
-                
-                <div class="crop-controls">
-                    <button id="cropConfirm" class="btn-primary">
-                        <i class="fas fa-check mr-2"></i>
-                        Gunakan Foto Ini
-                    </button>
-                    <button id="cropCancel" class="btn-secondary">
-                        <i class="fas fa-times mr-2"></i>
-                        Batal
-                    </button>
-                </div>
-                
-                <div class="mt-4 text-center">
-                    <p class="text-sm text-gray-600">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Drag untuk memindah, scroll untuk zoom, resize untuk menyesuaikan ukuran
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         // Application State
         let isAdminMode = false;
@@ -528,7 +825,6 @@
         let editingEmployeeId = null;
         let unsubscribeEmployees = null;
         let currentPhotoData = null; // Store uploaded photo data
-        let cropper = null; // Cropper.js instance
 
         // Initialize Application
         window.initApp = function() {
@@ -541,6 +837,8 @@
             
             setupAuthStateListener();
             setupEventListeners();
+            setupCropBoxDragging();
+            observeScrollElements(); // Initialize scroll animations
             hideLoadingScreen();
         };
 
@@ -706,7 +1004,7 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            // Check file size (max 800KB for Firestore)
+            // Check file size (max 800KB)
             if (file.size > 800 * 1024) {
                 showNotification('Ukuran file terlalu besar. Maksimal 800KB.', 'error');
                 e.target.value = '';
@@ -722,105 +1020,186 @@
 
             const reader = new FileReader();
             reader.onload = function(event) {
-                // Show cropper modal for admin users
-                if (isAdminMode) {
-                    showImageCropper(event.target.result);
-                } else {
-                    // For non-admin users, use direct compression
-                    compressImage(event.target.result, (compressedData) => {
-                        currentPhotoData = compressedData;
-                        updatePhotoPreview(currentPhotoData, true);
-                        
-                        // Clear emoji selection
-                        const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
-                        photoRadios.forEach(radio => radio.checked = false);
-                    });
-                }
+                // Show image editor for cropping
+                showImageEditor(event.target.result);
             };
             reader.readAsDataURL(file);
         }
 
-        // Show image cropper modal
-        function showImageCropper(imageData) {
-            const cropperImage = document.getElementById('cropperImage');
-            const cropModal = document.getElementById('imageCropModal');
+        // Show image editor modal
+        function showImageEditor(imageData) {
+            const editorModal = document.getElementById('imageEditorModal');
+            const canvas = document.getElementById('cropCanvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
             
-            cropperImage.src = imageData;
-            cropModal.classList.remove('hidden');
-            
-            // Initialize cropper after image loads
-            cropperImage.onload = function() {
-                if (cropper) {
-                    cropper.destroy();
+            img.onload = function() {
+                // Set canvas size
+                const maxSize = 400;
+                let { width, height } = img;
+                
+                // Scale image to fit in editor
+                if (width > height) {
+                    if (width > maxSize) {
+                        height = (height * maxSize) / width;
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width = (width * maxSize) / height;
+                        height = maxSize;
+                    }
                 }
                 
-                cropper = new Cropper(cropperImage, {
-                    aspectRatio: 1, // Square crop
-                    viewMode: 1,
-                    dragMode: 'move',
-                    autoCropArea: 0.8,
-                    restore: false,
-                    guides: false,
-                    center: false,
-                    highlight: false,
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
-                    minContainerWidth: 300,
-                    minContainerHeight: 300
-                });
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Store original image data
+                window.originalImageData = imageData;
+                window.currentCanvas = canvas;
+                
+                // Reset crop area to center square
+                resetCropArea();
+                
+                // Show modal with highest z-index
+                editorModal.classList.remove('hidden');
+                editorModal.style.zIndex = '10000';
             };
+            
+            img.src = imageData;
         }
 
-        // Handle crop confirm
-        function handleCropConfirm() {
-            if (!cropper) return;
+        // Reset crop area to center square
+        function resetCropArea() {
+            const canvas = document.getElementById('cropCanvas');
+            const cropOverlay = document.getElementById('cropOverlay');
+            const cropBox = document.getElementById('cropBox');
             
-            // Get cropped canvas
-            const canvas = cropper.getCroppedCanvas({
-                width: 200,
-                height: 200,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high'
+            const size = Math.min(canvas.width, canvas.height) * 0.8;
+            const x = (canvas.width - size) / 2;
+            const y = (canvas.height - size) / 2;
+            
+            cropBox.style.left = x + 'px';
+            cropBox.style.top = y + 'px';
+            cropBox.style.width = size + 'px';
+            cropBox.style.height = size + 'px';
+            
+            // Store crop data
+            window.cropData = { x, y, size };
+        }
+
+        // Setup crop box dragging
+        function setupCropBoxDragging() {
+            const cropBox = document.getElementById('cropBox');
+            const canvas = document.getElementById('cropCanvas');
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+            
+            cropBox.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = parseInt(cropBox.style.left);
+                startTop = parseInt(cropBox.style.top);
+                e.preventDefault();
             });
             
-            // Convert to compressed data URL
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                const newLeft = startLeft + deltaX;
+                const newTop = startTop + deltaY;
+                const boxSize = parseInt(cropBox.style.width);
+                
+                // Constrain to canvas bounds
+                const maxLeft = canvas.width - boxSize;
+                const maxTop = canvas.height - boxSize;
+                
+                const constrainedLeft = Math.max(0, Math.min(maxLeft, newLeft));
+                const constrainedTop = Math.max(0, Math.min(maxTop, newTop));
+                
+                cropBox.style.left = constrainedLeft + 'px';
+                cropBox.style.top = constrainedTop + 'px';
+                
+                // Update crop data
+                window.cropData = {
+                    x: constrainedLeft,
+                    y: constrainedTop,
+                    size: boxSize
+                };
+            });
             
-            // Check size and compress further if needed
-            if (compressedDataUrl.length > 800000) { // ~800KB limit
-                const furtherCompressed = canvas.toDataURL('image/jpeg', 0.6);
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        // Crop and save image
+        function cropAndSaveImage() {
+            const canvas = document.getElementById('cropCanvas');
+            const { x, y, size } = window.cropData;
+            
+            // Create new canvas for cropped image
+            const cropCanvas = document.createElement('canvas');
+            const cropCtx = cropCanvas.getContext('2d');
+            
+            // Set final size (200x200 for profile photos)
+            const finalSize = 200;
+            cropCanvas.width = finalSize;
+            cropCanvas.height = finalSize;
+            
+            // Draw cropped and resized image
+            cropCtx.drawImage(canvas, x, y, size, size, 0, 0, finalSize, finalSize);
+            
+            // Convert to compressed JPEG
+            const compressedData = cropCanvas.toDataURL('image/jpeg', 0.8);
+            
+            // Check final size
+            if (compressedData.length > 800000) { // ~800KB limit
+                const furtherCompressed = cropCanvas.toDataURL('image/jpeg', 0.6);
                 if (furtherCompressed.length > 800000) {
-                    currentPhotoData = canvas.toDataURL('image/jpeg', 0.4);
+                    currentPhotoData = cropCanvas.toDataURL('image/jpeg', 0.4);
                 } else {
                     currentPhotoData = furtherCompressed;
                 }
             } else {
-                currentPhotoData = compressedDataUrl;
+                currentPhotoData = compressedData;
             }
             
+            // Update preview immediately
             updatePhotoPreview(currentPhotoData, true);
             
             // Clear emoji selection
             const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
             photoRadios.forEach(radio => radio.checked = false);
             
-            closeCropModal();
-            showNotification('Foto berhasil diedit dan siap digunakan', 'success');
-        }
-
-        // Close crop modal
-        function closeCropModal() {
-            const cropModal = document.getElementById('imageCropModal');
-            cropModal.classList.add('hidden');
-            
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
+            // If editing existing employee, update the data immediately for instant visual feedback
+            if (editingEmployeeId) {
+                const employeeIndex = employees.findIndex(emp => emp.id === editingEmployeeId);
+                if (employeeIndex !== -1) {
+                    employees[employeeIndex].photoData = currentPhotoData;
+                    employees[employeeIndex].photo = '';
+                    // Re-render to show changes immediately
+                    filteredEmployees = [...employees];
+                    renderEmployees();
+                }
             }
             
-            // Clear file input
-            document.getElementById('photoUpload').value = '';
+            // Close editor
+            closeImageEditor();
+            
+            showNotification('Gambar berhasil dipotong dan dioptimalkan! Klik "Simpan" untuk menyimpan perubahan.', 'success');
+        }
+
+        // Close image editor
+        function closeImageEditor() {
+            document.getElementById('imageEditorModal').classList.add('hidden');
+            window.originalImageData = null;
+            window.currentCanvas = null;
+            window.cropData = null;
         }
 
         // Compress image to reduce size for Firestore
@@ -858,7 +1237,7 @@
                 // Convert to JPEG with compression (0.7 quality)
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
                 
-                // Check if still too large (Firestore limit ~800KB)
+                // Check if still too large (Firestore limit ~1MB per field)
                 if (compressedDataUrl.length > 800000) { // ~800KB limit
                     // Further compress
                     const furtherCompressed = canvas.toDataURL('image/jpeg', 0.5);
@@ -911,8 +1290,8 @@
             try {
                 showNotification('Memuat data cuti dari spreadsheet...', 'info');
                 
-                // URL spreadsheet yang sudah dipublikasi
-                const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzbKpHevX7OanEk05EQ51zhE7toeltg4Cu1n7OnS958vZcgop4R6j75OO9LWSPIbl210nan07F_mDh/pub?gid=443906944&single=true&output=csv';
+                // URL spreadsheet yang sudah dipublikasi - UPDATED LINK
+                const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTwN6hYp0m2Q6gQLtuYDN6sWCPBv_u62FgEUvYrWpINdfvZMWmRqizQMF-O9yjx_bFr8nAzG0z2SSlr/pub?gid=574165242&single=true&output=csv';
                 
                 const response = await fetch(spreadsheetUrl, {
                     method: 'GET',
@@ -1018,10 +1397,10 @@
             console.log('Sample leave data:', leaveData.slice(0, 3));
             
             const todayLeaves = leaveData.filter(leave => {
-                // Try multiple possible column names for dates
+                // Try multiple possible column names for dates - UPDATED FOR NEW SPREADSHEET
                 const possibleStartColumns = [
-                    'Tanggal Mulai Cuti',
                     'Tanggal Mulai Cuti  ',
+                    'Tanggal Mulai Cuti',
                     'tanggal_mulai',
                     'Start Date',
                     'Mulai Cuti',
@@ -1029,8 +1408,8 @@
                 ];
                 
                 const possibleEndColumns = [
-                    'Tanggal Selesai Cuti',
                     'Tanggal Selesai Cuti  ',
+                    'Tanggal Selesai Cuti',
                     'tanggal_selesai',
                     'End Date',
                     'Selesai Cuti',
@@ -1084,10 +1463,10 @@
             document.getElementById('todayLeaveCount').textContent = todayLeaves.length;
             
             if (todayLeaves.length > 0) {
-                // Try multiple possible column names for employee names
+                // Try multiple possible column names for employee names - UPDATED FOR NEW SPREADSHEET
                 const possibleNameColumns = [
-                    'Nama Pegawai',
                     'Nama Pegawai ',
+                    'Nama Pegawai',
                     'nama',
                     'Name',
                     'Employee Name',
@@ -1225,11 +1604,6 @@
                 radio.addEventListener('change', updatePhotoPreview);
             });
             
-            // Image crop modal listeners
-            document.getElementById('closeCropModal').addEventListener('click', closeCropModal);
-            document.getElementById('cropConfirm').addEventListener('click', handleCropConfirm);
-            document.getElementById('cropCancel').addEventListener('click', closeCropModal);
-            
             // Close modals when clicking outside
             document.getElementById('employeeModal').addEventListener('click', (e) => {
                 if (e.target === document.getElementById('employeeModal')) closeEmployeeModal();
@@ -1240,8 +1614,8 @@
             document.getElementById('adminLoginModal').addEventListener('click', (e) => {
                 if (e.target === document.getElementById('adminLoginModal')) closeLoginModal();
             });
-            document.getElementById('imageCropModal').addEventListener('click', (e) => {
-                if (e.target === document.getElementById('imageCropModal')) closeCropModal();
+            document.getElementById('imageEditorModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('imageEditorModal')) closeImageEditor();
             });
         }
 
@@ -1342,9 +1716,11 @@
                 noDataMessage.classList.remove('hidden');
                 const searchTerm = document.getElementById('searchInput')?.value;
                 if (searchTerm && searchTerm.trim() !== '') {
-                    document.querySelector('#noDataMessage p').textContent = `Tidak ditemukan pegawai dengan kata kunci "${searchTerm}"`;
+                    document.querySelector('#noDataMessage h3').textContent = `Tidak Ditemukan`;
+                    document.querySelector('#noDataMessage p').textContent = `Tidak ada pegawai dengan kata kunci "${searchTerm}"`;
                 } else {
-                    document.querySelector('#noDataMessage p').textContent = 'Belum ada data pegawai';
+                    document.querySelector('#noDataMessage h3').textContent = 'Belum Ada Data Pegawai';
+                    document.querySelector('#noDataMessage p').textContent = 'Mulai dengan menambahkan pegawai pertama';
                 }
                 return;
             }
@@ -1352,43 +1728,128 @@
             employeeGrid.classList.remove('hidden');
             noDataMessage.classList.add('hidden');
 
-            employeeGrid.innerHTML = employeesToRender.map(employee => {
+            // Generate gradient backgrounds for variety
+            const gradients = ['gradient-bg-1', 'gradient-bg-2', 'gradient-bg-3', 'gradient-bg-4', 'gradient-bg-5', 'gradient-bg-6'];
+
+            employeeGrid.innerHTML = employeesToRender.map((employee, index) => {
                 const totalCuti = (employee.cutiTahunan || 0) + (employee.cutiBesar || 0) + (employee.cutiAlasanPenting || 0) + 
                                (employee.cutiSakit || 0) + (employee.cutiMelahirkan || 0) + (employee.cutiDiluarTanggungan || 0);
                 
-                // Determine photo display
+                const gradientClass = gradients[index % gradients.length];
+                
+                // Determine photo display with enhanced styling
                 let photoDisplay = '';
                 if (employee.photoData) {
-                    // Show uploaded photo
-                    photoDisplay = `<img src="${employee.photoData}" class="w-16 h-16 rounded-full object-cover mx-auto">`;
+                    // Show uploaded photo with avatar ring
+                    photoDisplay = `
+                        <div class="avatar-ring w-20 h-20 mx-auto mb-4">
+                            <img src="${employee.photoData}" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg">
+                        </div>
+                    `;
                 } else {
-                    // Show emoji
-                    photoDisplay = `<div class="text-6xl mb-4">${employee.photo || '👨‍💼'}</div>`;
+                    // Show emoji with enhanced styling
+                    photoDisplay = `
+                        <div class="relative w-20 h-20 mx-auto mb-4">
+                            <div class="w-20 h-20 ${gradientClass} rounded-full flex items-center justify-center shadow-xl transform hover:scale-110 transition-transform duration-300">
+                                <span class="text-4xl">${employee.photo || '👨‍💼'}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Status badge based on leave usage
+                let statusBadge = '';
+                if (totalCuti === 0) {
+                    statusBadge = '<div class="absolute top-3 left-3 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">✅ Aktif</div>';
+                } else if (totalCuti > 20) {
+                    statusBadge = '<div class="absolute top-3 left-3 bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-semibold">⚠️ Banyak Cuti</div>';
+                } else {
+                    statusBadge = '<div class="absolute top-3 left-3 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">📅 Normal</div>';
                 }
                 
                 return `
-                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover cursor-pointer border-l-4 border-blue-500 relative">
+                    <div class="scroll-reveal bg-white rounded-2xl shadow-xl p-6 card-hover cursor-pointer border border-gray-100 relative overflow-hidden" style="animation-delay: ${index * 0.1}s;">
+                        <!-- Background Pattern -->
+                        <div class="absolute top-0 right-0 w-24 h-24 ${gradientClass} rounded-full -mr-12 -mt-12 opacity-10"></div>
+                        
+                        ${statusBadge}
+                        
                         ${isAdminMode ? `
-                            <button onclick="deleteEmployee('${employee.id}')" class="absolute top-3 right-3 text-red-500 hover:text-red-700 text-lg">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                            <button onclick="editEmployee('${employee.id}')" class="absolute top-3 right-10 text-blue-500 hover:text-blue-700 text-lg">
-                                <i class="fas fa-edit"></i>
-                            </button>
+                            <div class="absolute top-3 right-3 flex space-x-2">
+                                <button onclick="editEmployee('${employee.id}')" class="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg transform hover:scale-110">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </button>
+                                <button onclick="deleteEmployee('${employee.id}')" class="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg transform hover:scale-110">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </div>
                         ` : ''}
-                        <div onclick="showEmployeeDetail('${employee.id}')" class="text-center">
+                        
+                        <div onclick="showEmployeeDetail('${employee.id}')" class="text-center relative z-10 pt-8">
                             ${photoDisplay}
-                            <h3 class="text-lg font-semibold text-gray-800 mb-2">${employee.name}</h3>
-                            <p class="text-sm text-gray-600 mb-1">NIP: ${employee.nip}</p>
-                            <p class="text-sm text-gray-600 mb-3">${employee.position}</p>
-                            <div class="bg-blue-50 rounded-lg p-3">
-                                <p class="text-sm text-gray-600">Total Cuti Terpakai</p>
-                                <p class="text-2xl font-bold text-blue-600">${totalCuti} hari</p>
+                            
+                            <h3 class="text-xl font-bold text-gray-800 mb-2 truncate">${employee.name}</h3>
+                            <div class="space-y-1 mb-4">
+                                <p class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full inline-block">
+                                    🆔 ${employee.nip}
+                                </p>
+                                <p class="text-sm text-gray-700 font-medium">${employee.position}</p>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                                <p class="text-sm text-gray-600 mb-1">Total Cuti Terpakai</p>
+                                <div class="flex items-center justify-center space-x-2">
+                                    <span class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">${totalCuti}</span>
+                                    <span class="text-sm text-gray-600 font-medium">hari</span>
+                                </div>
+                                ${totalCuti > 0 ? `
+                                    <div class="mt-2 flex justify-center">
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500" style="width: ${Math.min((totalCuti / 30) * 100, 100)}%"></div>
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            // Trigger scroll reveal animations
+            setTimeout(() => {
+                observeScrollElements();
+            }, 100);
+        }
+
+        // Scroll reveal animation observer
+        function observeScrollElements() {
+            const scrollElements = document.querySelectorAll('.scroll-reveal');
+            
+            const elementInView = (el, dividend = 1) => {
+                const elementTop = el.getBoundingClientRect().top;
+                return (
+                    elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend
+                );
+            };
+            
+            const displayScrollElement = (element) => {
+                element.classList.add('revealed');
+            };
+            
+            const hideScrollElement = (element) => {
+                element.classList.remove('revealed');
+            };
+            
+            const handleScrollAnimation = () => {
+                scrollElements.forEach((el) => {
+                    if (elementInView(el, 1.25)) {
+                        displayScrollElement(el);
+                    }
+                });
+            };
+            
+            window.addEventListener('scroll', handleScrollAnimation);
+            handleScrollAnimation(); // Initial check
         }
 
         // Show employee detail modal
@@ -1958,6 +2419,10 @@
         window.showEmployeeDetail = showEmployeeDetail;
         window.editEmployee = editEmployee;
         window.deleteEmployee = deleteEmployee;
+        window.showImageEditor = showImageEditor;
+        window.resetCropArea = resetCropArea;
+        window.cropAndSaveImage = cropAndSaveImage;
+        window.closeImageEditor = closeImageEditor;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9809996061103e3b',t:'MTc1ODEyMjU0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98122d8d43d9fd9a',t:'MTc1ODIxMjUwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
