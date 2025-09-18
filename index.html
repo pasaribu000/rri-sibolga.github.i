@@ -6,6 +6,9 @@
     <title>Layanan Informasi Cuti</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Cropper.js for image editing -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     
     <!-- Firebase SDK -->
     <script type="module">
@@ -96,6 +99,37 @@
             border-radius: 50%;
             object-fit: cover;
             border: 4px solid #e5e7eb;
+        }
+        .cropper-container {
+            max-height: 400px;
+        }
+        .crop-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .crop-controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .crop-controls .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .crop-controls .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .crop-controls .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        .crop-controls .btn-secondary:hover {
+            background-color: #4b5563;
         }
     </style>
 </head>
@@ -363,7 +397,7 @@
                                     Upload Foto Pegawai
                                 </label>
                                 <input type="file" id="photoUpload" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                                <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF (Max: 500KB) - Foto akan dikompres otomatis</p>
+                                <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF (Max: 800KB) - Foto akan dikompres otomatis</p>
                             </div>
                             
                             <!-- Or Choose Emoji -->
@@ -443,6 +477,47 @@
         </div>
     </div>
 
+    <!-- Image Crop Modal -->
+    <div id="imageCropModal" class="hidden fixed inset-0 bg-black bg-opacity-75 modal z-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-crop mr-2 text-blue-600"></i>
+                        Edit Foto Pegawai
+                    </h2>
+                    <button id="closeCropModal" class="text-gray-400 hover:text-gray-600 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <div id="cropperContainer" class="max-h-96 overflow-hidden rounded-lg border border-gray-300">
+                        <img id="cropperImage" class="max-w-full">
+                    </div>
+                </div>
+                
+                <div class="crop-controls">
+                    <button id="cropConfirm" class="btn-primary">
+                        <i class="fas fa-check mr-2"></i>
+                        Gunakan Foto Ini
+                    </button>
+                    <button id="cropCancel" class="btn-secondary">
+                        <i class="fas fa-times mr-2"></i>
+                        Batal
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Drag untuk memindah, scroll untuk zoom, resize untuk menyesuaikan ukuran
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Application State
         let isAdminMode = false;
@@ -453,6 +528,7 @@
         let editingEmployeeId = null;
         let unsubscribeEmployees = null;
         let currentPhotoData = null; // Store uploaded photo data
+        let cropper = null; // Cropper.js instance
 
         // Initialize Application
         window.initApp = function() {
@@ -630,9 +706,9 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            // Check file size (max 500KB for Firestore)
-            if (file.size > 500 * 1024) {
-                showNotification('Ukuran file terlalu besar. Maksimal 500KB.', 'error');
+            // Check file size (max 800KB for Firestore)
+            if (file.size > 800 * 1024) {
+                showNotification('Ukuran file terlalu besar. Maksimal 800KB.', 'error');
                 e.target.value = '';
                 return;
             }
@@ -646,17 +722,105 @@
 
             const reader = new FileReader();
             reader.onload = function(event) {
-                // Compress image before storing
-                compressImage(event.target.result, (compressedData) => {
-                    currentPhotoData = compressedData;
-                    updatePhotoPreview(currentPhotoData, true);
-                    
-                    // Clear emoji selection
-                    const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
-                    photoRadios.forEach(radio => radio.checked = false);
-                });
+                // Show cropper modal for admin users
+                if (isAdminMode) {
+                    showImageCropper(event.target.result);
+                } else {
+                    // For non-admin users, use direct compression
+                    compressImage(event.target.result, (compressedData) => {
+                        currentPhotoData = compressedData;
+                        updatePhotoPreview(currentPhotoData, true);
+                        
+                        // Clear emoji selection
+                        const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
+                        photoRadios.forEach(radio => radio.checked = false);
+                    });
+                }
             };
             reader.readAsDataURL(file);
+        }
+
+        // Show image cropper modal
+        function showImageCropper(imageData) {
+            const cropperImage = document.getElementById('cropperImage');
+            const cropModal = document.getElementById('imageCropModal');
+            
+            cropperImage.src = imageData;
+            cropModal.classList.remove('hidden');
+            
+            // Initialize cropper after image loads
+            cropperImage.onload = function() {
+                if (cropper) {
+                    cropper.destroy();
+                }
+                
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1, // Square crop
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: false,
+                    center: false,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    minContainerWidth: 300,
+                    minContainerHeight: 300
+                });
+            };
+        }
+
+        // Handle crop confirm
+        function handleCropConfirm() {
+            if (!cropper) return;
+            
+            // Get cropped canvas
+            const canvas = cropper.getCroppedCanvas({
+                width: 200,
+                height: 200,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            
+            // Convert to compressed data URL
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Check size and compress further if needed
+            if (compressedDataUrl.length > 800000) { // ~800KB limit
+                const furtherCompressed = canvas.toDataURL('image/jpeg', 0.6);
+                if (furtherCompressed.length > 800000) {
+                    currentPhotoData = canvas.toDataURL('image/jpeg', 0.4);
+                } else {
+                    currentPhotoData = furtherCompressed;
+                }
+            } else {
+                currentPhotoData = compressedDataUrl;
+            }
+            
+            updatePhotoPreview(currentPhotoData, true);
+            
+            // Clear emoji selection
+            const photoRadios = document.querySelectorAll('input[name="employeePhoto"]');
+            photoRadios.forEach(radio => radio.checked = false);
+            
+            closeCropModal();
+            showNotification('Foto berhasil diedit dan siap digunakan', 'success');
+        }
+
+        // Close crop modal
+        function closeCropModal() {
+            const cropModal = document.getElementById('imageCropModal');
+            cropModal.classList.add('hidden');
+            
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            
+            // Clear file input
+            document.getElementById('photoUpload').value = '';
         }
 
         // Compress image to reduce size for Firestore
@@ -694,7 +858,7 @@
                 // Convert to JPEG with compression (0.7 quality)
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
                 
-                // Check if still too large (Firestore limit ~1MB per field)
+                // Check if still too large (Firestore limit ~800KB)
                 if (compressedDataUrl.length > 800000) { // ~800KB limit
                     // Further compress
                     const furtherCompressed = canvas.toDataURL('image/jpeg', 0.5);
@@ -1061,6 +1225,11 @@
                 radio.addEventListener('change', updatePhotoPreview);
             });
             
+            // Image crop modal listeners
+            document.getElementById('closeCropModal').addEventListener('click', closeCropModal);
+            document.getElementById('cropConfirm').addEventListener('click', handleCropConfirm);
+            document.getElementById('cropCancel').addEventListener('click', closeCropModal);
+            
             // Close modals when clicking outside
             document.getElementById('employeeModal').addEventListener('click', (e) => {
                 if (e.target === document.getElementById('employeeModal')) closeEmployeeModal();
@@ -1070,6 +1239,9 @@
             });
             document.getElementById('adminLoginModal').addEventListener('click', (e) => {
                 if (e.target === document.getElementById('adminLoginModal')) closeLoginModal();
+            });
+            document.getElementById('imageCropModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('imageCropModal')) closeCropModal();
             });
         }
 
@@ -1787,6 +1959,5 @@
         window.editEmployee = editEmployee;
         window.deleteEmployee = deleteEmployee;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9809996061103e3b',t:'MTc1ODEyMjU0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9809996061103e3b',t:'MTc1ODEyMjU0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
-
