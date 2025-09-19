@@ -856,14 +856,40 @@
         async function testFirestoreConnection() {
             try {
                 console.log('🔍 Testing Firestore connection...');
-                const { collection, getDocs } = window.firebaseServices;
+                const { collection, getDocs, doc, updateDoc } = window.firebaseServices;
                 const testCollection = collection(window.firebaseDb, 'employees');
                 const snapshot = await getDocs(testCollection);
                 console.log('✅ Firestore connection successful. Documents found:', snapshot.size);
-                showNotification('Koneksi database berhasil', 'success');
+                
+                // Test write permission if we have employees
+                if (snapshot.size > 0 && currentUser) {
+                    const firstDoc = snapshot.docs[0];
+                    console.log('🧪 Testing write permission...');
+                    const testRef = doc(window.firebaseDb, 'employees', firstDoc.id);
+                    await updateDoc(testRef, {
+                        lastTestUpdate: new Date().toISOString()
+                    });
+                    console.log('✅ Write permission test successful');
+                    showNotification('Koneksi database dan izin tulis berhasil', 'success');
+                } else {
+                    showNotification('Koneksi database berhasil (read-only)', 'success');
+                }
             } catch (error) {
                 console.error('❌ Firestore connection failed:', error);
-                showNotification('Koneksi ke database gagal: ' + error.message, 'error');
+                console.error('🔍 Error details:', {
+                    code: error.code,
+                    message: error.message,
+                    user: currentUser?.email || 'not logged in'
+                });
+                
+                let errorMsg = 'Koneksi ke database gagal';
+                if (error.code === 'permission-denied') {
+                    errorMsg = 'Akses ditolak - pastikan sudah login sebagai admin';
+                } else if (error.message) {
+                    errorMsg += ': ' + error.message;
+                }
+                
+                showNotification(errorMsg, 'error');
             }
         }
 
@@ -1908,10 +1934,14 @@
                                         <input type="number" 
                                                value="${type.value}" 
                                                min="0" 
-                                               class="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-${type.color}-500"
+                                               max="365"
+                                               class="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-${type.color}-500 transition-all duration-300"
                                                onchange="updateCutiValue('${employee.id}', '${type.field}', this.value)"
                                                onclick="event.stopPropagation()"
-                                               data-field="${type.field}">
+                                               data-field="${type.field}"
+                                               data-employee-id="${employee.id}"
+                                               title="Klik untuk mengubah jumlah ${type.label.toLowerCase()}"
+                                               placeholder="0">
                                     ` : `
                                         <span class="text-2xl font-bold text-${type.color}-600">${type.value} hari</span>
                                     `}
@@ -2002,7 +2032,7 @@
             }
         }
 
-        // Update cuti value - FIXED VERSION
+        // Update cuti value - ENHANCED VERSION WITH BETTER ERROR HANDLING
         async function updateCutiValue(employeeId, fieldName, value) {
             if (!isAdminMode) {
                 showNotification('Hanya admin yang dapat mengubah data cuti', 'error');
@@ -2011,11 +2041,20 @@
             
             console.log('🔄 Updating cuti value:', { employeeId, fieldName, value });
             
+            // Find the input element first for visual feedback
+            const inputElement = document.querySelector(`input[data-field="${fieldName}"][onchange*="${employeeId}"]`);
+            
             try {
                 const { doc, updateDoc } = window.firebaseServices;
                 const employeeRef = doc(window.firebaseDb, 'employees', employeeId);
                 
                 const numericValue = parseInt(value) || 0;
+                
+                // Validate the field name to prevent injection
+                const validFields = ['cutiTahunan', 'cutiBesar', 'cutiAlasanPenting', 'cutiSakit', 'cutiMelahirkan', 'cutiDiluarTanggungan'];
+                if (!validFields.includes(fieldName)) {
+                    throw new Error('Invalid field name: ' + fieldName);
+                }
                 
                 const updateData = {
                     [fieldName]: numericValue,
@@ -2023,34 +2062,86 @@
                 };
                 
                 console.log('💾 Updating with data:', updateData);
+                console.log('📍 Employee ID:', employeeId);
+                console.log('🏷️ Field name:', fieldName);
+                
+                // Show immediate visual feedback
+                if (inputElement) {
+                    inputElement.style.backgroundColor = '#fef3c7'; // Yellow background while saving
+                    inputElement.style.borderColor = '#f59e0b';
+                }
+                
                 await updateDoc(employeeRef, updateData);
+                
+                console.log('✅ Successfully updated in Firestore');
                 
                 // Update local data immediately for instant feedback
                 const employeeIndex = employees.findIndex(emp => emp.id === employeeId);
                 if (employeeIndex !== -1) {
                     employees[employeeIndex][fieldName] = numericValue;
-                    filteredEmployees = [...employees];
+                    console.log('📊 Updated local employee data:', employees[employeeIndex]);
+                    
+                    // Update filtered employees as well
+                    const filteredIndex = filteredEmployees.findIndex(emp => emp.id === employeeId);
+                    if (filteredIndex !== -1) {
+                        filteredEmployees[filteredIndex][fieldName] = numericValue;
+                    }
+                    
+                    // Re-render and update statistics
                     renderEmployees();
                     updateStatistics();
                 }
                 
-                // Add visual feedback to the input field
-                const inputElement = document.querySelector(`input[data-field="${fieldName}"]`);
+                // Add success visual feedback to the input field
                 if (inputElement) {
+                    inputElement.style.backgroundColor = '#dcfce7'; // Green background for success
+                    inputElement.style.borderColor = '#16a34a';
                     inputElement.classList.add('update-success');
+                    
                     setTimeout(() => {
+                        inputElement.style.backgroundColor = '';
+                        inputElement.style.borderColor = '';
                         inputElement.classList.remove('update-success');
-                    }, 600);
+                    }, 1500);
                 }
                 
-                showNotification(`${getFieldDisplayName(fieldName)} berhasil diperbarui menjadi ${numericValue} hari`, 'success');
+                showNotification(`✅ ${getFieldDisplayName(fieldName)} berhasil diperbarui menjadi ${numericValue} hari`, 'success');
                 
             } catch (error) {
                 console.error('❌ Error updating cuti value:', error);
-                showNotification('Gagal memperbarui data cuti: ' + error.message, 'error');
+                console.error('🔍 Error details:', {
+                    code: error.code,
+                    message: error.message,
+                    employeeId,
+                    fieldName,
+                    value
+                });
+                
+                // Show error visual feedback
+                if (inputElement) {
+                    inputElement.style.backgroundColor = '#fecaca'; // Red background for error
+                    inputElement.style.borderColor = '#dc2626';
+                    
+                    setTimeout(() => {
+                        inputElement.style.backgroundColor = '';
+                        inputElement.style.borderColor = '';
+                    }, 2000);
+                }
+                
+                let errorMessage = 'Gagal memperbarui data cuti';
+                if (error.code === 'permission-denied') {
+                    errorMessage = 'Akses ditolak. Periksa izin Firestore';
+                } else if (error.code === 'not-found') {
+                    errorMessage = 'Data pegawai tidak ditemukan';
+                } else if (error.code === 'unavailable') {
+                    errorMessage = 'Layanan database tidak tersedia';
+                } else if (error.message) {
+                    errorMessage += ': ' + error.message;
+                }
+                
+                showNotification('❌ ' + errorMessage, 'error');
                 
                 // Revert the input value on error
-                const inputElement = document.querySelector(`input[data-field="${fieldName}"]`);
                 if (inputElement) {
                     const employee = employees.find(emp => emp.id === employeeId);
                     if (employee) {
@@ -2420,5 +2511,5 @@
         window.cropAndSaveImage = cropAndSaveImage;
         window.closeImageEditor = closeImageEditor;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'981560f8a090f8ce',t:'MTc1ODI0NjA2Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9815780544648208',t:'MTc1ODI0NzAxMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
