@@ -316,6 +316,16 @@
                 border-color: rgba(75, 85, 99, 0.3);
             }
         }
+
+        /* Update Success Animation */
+        .update-success {
+            animation: updatePulse 0.6s ease-in-out;
+        }
+        @keyframes updatePulse {
+            0% { background-color: #f0f9ff; }
+            50% { background-color: #dbeafe; }
+            100% { background-color: #f0f9ff; }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -489,7 +499,7 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mobile-stack">
                         <a 
-                            href="https://docs.google.com/forms/d/e/1FAIpQLSfh0_-PQxHlgN8MPIGwVN0YBfwO9EMQxQ92cEAb818g5DloZg/viewform?usp=header" 
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSfh0_-PQxHlgN8MPIGwVN0YBfwO9EMQxQ92cEAb818g5DloZg/viewform?usp=sharing&ouid=105802488582507153521" 
                             target="_blank"
                             class="btn-modern gradient-bg-4 hover:shadow-2xl text-white px-8 py-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-105 mobile-full"
                         >
@@ -1858,12 +1868,12 @@
             if (!employee) return;
 
             const cutiTypes = [
-                { label: 'Cuti Tahunan Terpakai', value: employee.cutiTahunan || 0, icon: 'fas fa-calendar-check', color: 'blue' },
-                { label: 'Cuti Besar Terpakai', value: employee.cutiBesar || 0, icon: 'fas fa-calendar-plus', color: 'green' },
-                { label: 'Cuti Alasan Penting Terpakai', value: employee.cutiAlasanPenting || 0, icon: 'fas fa-exclamation-circle', color: 'yellow' },
-                { label: 'Cuti Sakit Terpakai', value: employee.cutiSakit || 0, icon: 'fas fa-user-injured', color: 'red' },
-                { label: 'Cuti Melahirkan Terpakai', value: employee.cutiMelahirkan || 0, icon: 'fas fa-baby', color: 'pink' },
-                { label: 'Cuti Diluar Tanggungan Negara Terpakai', value: employee.cutiDiluarTanggungan || 0, icon: 'fas fa-plane', color: 'purple' }
+                { label: 'Cuti Tahunan Terpakai', value: employee.cutiTahunan || 0, icon: 'fas fa-calendar-check', color: 'blue', field: 'cutiTahunan' },
+                { label: 'Cuti Besar Terpakai', value: employee.cutiBesar || 0, icon: 'fas fa-calendar-plus', color: 'green', field: 'cutiBesar' },
+                { label: 'Cuti Alasan Penting Terpakai', value: employee.cutiAlasanPenting || 0, icon: 'fas fa-exclamation-circle', color: 'yellow', field: 'cutiAlasanPenting' },
+                { label: 'Cuti Sakit Terpakai', value: employee.cutiSakit || 0, icon: 'fas fa-user-injured', color: 'red', field: 'cutiSakit' },
+                { label: 'Cuti Melahirkan Terpakai', value: employee.cutiMelahirkan || 0, icon: 'fas fa-baby', color: 'pink', field: 'cutiMelahirkan' },
+                { label: 'Cuti Diluar Tanggungan Negara Terpakai', value: employee.cutiDiluarTanggungan || 0, icon: 'fas fa-plane', color: 'purple', field: 'cutiDiluarTanggungan' }
             ];
 
             // Determine photo display for modal
@@ -1899,8 +1909,9 @@
                                                value="${type.value}" 
                                                min="0" 
                                                class="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-${type.color}-500"
-                                               onchange="updateCutiValue('${employee.id}', '${narasiKey}', this.value)"
-                                               onclick="event.stopPropagation()">
+                                               onchange="updateCutiValue('${employee.id}', '${type.field}', this.value)"
+                                               onclick="event.stopPropagation()"
+                                               data-field="${type.field}">
                                     ` : `
                                         <span class="text-2xl font-bold text-${type.color}-600">${type.value} hari</span>
                                     `}
@@ -1991,35 +2002,75 @@
             }
         }
 
-        // Update cuti value
-        async function updateCutiValue(employeeId, cutiType, value) {
-            if (!isAdminMode) return;
+        // Update cuti value - FIXED VERSION
+        async function updateCutiValue(employeeId, fieldName, value) {
+            if (!isAdminMode) {
+                showNotification('Hanya admin yang dapat mengubah data cuti', 'error');
+                return;
+            }
+            
+            console.log('🔄 Updating cuti value:', { employeeId, fieldName, value });
             
             try {
                 const { doc, updateDoc } = window.firebaseServices;
                 const employeeRef = doc(window.firebaseDb, 'employees', employeeId);
                 
-                const fieldMap = {
-                    'cutitahunterpakai': 'cutiTahunan',
-                    'cutibesar': 'cutiBesar',
-                    'cutialasanpenting': 'cutiAlasanPenting',
-                    'cutisakit': 'cutiSakit',
-                    'cutimelahirkan': 'cutiMelahirkan',
-                    'cutiluartanggungannegara': 'cutiDiluarTanggungan'
+                const numericValue = parseInt(value) || 0;
+                
+                const updateData = {
+                    [fieldName]: numericValue,
+                    updatedAt: new Date().toISOString()
                 };
-
-                const field = fieldMap[cutiType];
-                if (field) {
-                    await updateDoc(employeeRef, {
-                        [field]: parseInt(value) || 0
-                    });
-                    
-                    showNotification('Data cuti berhasil diperbarui', 'success');
+                
+                console.log('💾 Updating with data:', updateData);
+                await updateDoc(employeeRef, updateData);
+                
+                // Update local data immediately for instant feedback
+                const employeeIndex = employees.findIndex(emp => emp.id === employeeId);
+                if (employeeIndex !== -1) {
+                    employees[employeeIndex][fieldName] = numericValue;
+                    filteredEmployees = [...employees];
+                    renderEmployees();
+                    updateStatistics();
                 }
+                
+                // Add visual feedback to the input field
+                const inputElement = document.querySelector(`input[data-field="${fieldName}"]`);
+                if (inputElement) {
+                    inputElement.classList.add('update-success');
+                    setTimeout(() => {
+                        inputElement.classList.remove('update-success');
+                    }, 600);
+                }
+                
+                showNotification(`${getFieldDisplayName(fieldName)} berhasil diperbarui menjadi ${numericValue} hari`, 'success');
+                
             } catch (error) {
-                console.error('Error updating cuti value:', error);
-                showNotification('Gagal memperbarui data cuti', 'error');
+                console.error('❌ Error updating cuti value:', error);
+                showNotification('Gagal memperbarui data cuti: ' + error.message, 'error');
+                
+                // Revert the input value on error
+                const inputElement = document.querySelector(`input[data-field="${fieldName}"]`);
+                if (inputElement) {
+                    const employee = employees.find(emp => emp.id === employeeId);
+                    if (employee) {
+                        inputElement.value = employee[fieldName] || 0;
+                    }
+                }
             }
+        }
+
+        // Helper function to get display name for field
+        function getFieldDisplayName(fieldName) {
+            const fieldNames = {
+                'cutiTahunan': 'Cuti Tahunan',
+                'cutiBesar': 'Cuti Besar',
+                'cutiAlasanPenting': 'Cuti Alasan Penting',
+                'cutiSakit': 'Cuti Sakit',
+                'cutiMelahirkan': 'Cuti Melahirkan',
+                'cutiDiluarTanggungan': 'Cuti Diluar Tanggungan'
+            };
+            return fieldNames[fieldName] || fieldName;
         }
 
         // Show add employee form
@@ -2234,6 +2285,65 @@
             }
         }
 
+        // Show notification with enhanced feedback
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full max-w-md`;
+            
+            // Set colors and icons based on type
+            let icon = '';
+            switch (type) {
+                case 'success':
+                    notification.className += ' bg-green-500 text-white';
+                    icon = '<i class="fas fa-check-circle mr-2"></i>';
+                    break;
+                case 'error':
+                    notification.className += ' bg-red-500 text-white';
+                    icon = '<i class="fas fa-exclamation-circle mr-2"></i>';
+                    break;
+                case 'warning':
+                    notification.className += ' bg-yellow-500 text-white';
+                    icon = '<i class="fas fa-exclamation-triangle mr-2"></i>';
+                    break;
+                default:
+                    notification.className += ' bg-blue-500 text-white';
+                    icon = '<i class="fas fa-info-circle mr-2"></i>';
+            }
+            
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        ${icon}
+                        <span class="text-sm font-medium">${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white hover:text-gray-200 flex-shrink-0">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove after duration based on type
+            const duration = type === 'error' ? 8000 : type === 'success' ? 4000 : 5000;
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+
         // Close modals
         function closeEmployeeModal() {
             document.getElementById('employeeModal').classList.add('hidden');
@@ -2278,19 +2388,9 @@
                                 ${Object.keys(leaveData[0] || {}).map(key => `<li>${key}</li>`).join('')}
                             </ul>
                         </div>
-                        ${leaveData.length > 0 ? `
-                            <div class="bg-blue-50 p-4 rounded-lg">
-                                <p><strong>Sample Data (Record 1):</strong></p>
-                                <pre class="text-xs bg-white p-2 rounded mt-2 overflow-auto max-h-40">${JSON.stringify(leaveData[0], null, 2)}</pre>
-                            </div>
-                        ` : ''}
-                        <div class="bg-yellow-50 p-4 rounded-lg">
-                            <p class="text-sm"><strong>Tips:</strong></p>
-                            <ul class="text-xs list-disc list-inside">
-                                <li>Pastikan spreadsheet sudah dipublikasi dengan akses "Anyone with the link"</li>
-                                <li>Kolom tanggal harus berformat DD/MM/YYYY atau YYYY-MM-DD</li>
-                                <li>Nama kolom harus konsisten (Nama Pegawai, Tanggal Mulai Cuti, dll)</li>
-                            </ul>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p><strong>Sample Data (Record 1):</strong></p>
+                            <pre class="text-xs bg-white p-2 rounded mt-2 overflow-auto">${JSON.stringify(leaveData[0] || {}, null, 2)}</pre>
                         </div>
                     </div>
                 `;
@@ -2298,131 +2398,27 @@
                 document.getElementById('modalContent').innerHTML = debugInfo;
                 document.getElementById('employeeModal').classList.remove('hidden');
             } else {
-                showNotification('Tidak ada data spreadsheet untuk di-debug', 'error');
+                showNotification('Tidak ada data spreadsheet untuk di-debug', 'warning');
             }
         }
 
-        // Export data to Excel
+        // Export to Excel
         function exportToExcel() {
             if (!isAdminMode) return;
             
-            let csvContent = "data:text/csv;charset=utf-8,";
-            
-            const headers = [
-                "No",
-                "Nama Pegawai", 
-                "NIP", 
-                "Jabatan",
-                "Cuti Tahunan (hari)",
-                "Cuti Besar (hari)",
-                "Cuti Alasan Penting (hari)",
-                "Cuti Sakit (hari)",
-                "Cuti Melahirkan (hari)",
-                "Cuti Diluar Tanggungan (hari)",
-                "Total Cuti (hari)",
-                "Keterangan Cuti Tahunan",
-                "Keterangan Cuti Besar",
-                "Keterangan Cuti Alasan Penting",
-                "Keterangan Cuti Sakit",
-                "Keterangan Cuti Melahirkan",
-                "Keterangan Cuti Diluar Tanggungan",
-                "Ringkasan Total Cuti"
-            ];
-            
-            csvContent += headers.join(",") + "\n";
-            
-            employees.forEach((employee, index) => {
-                const totalCuti = (employee.cutiTahunan || 0) + (employee.cutiBesar || 0) + (employee.cutiAlasanPenting || 0) + 
-                               (employee.cutiSakit || 0) + (employee.cutiMelahirkan || 0) + (employee.cutiDiluarTanggungan || 0);
-                
-                const row = [
-                    index + 1,
-                    `"${employee.name}"`,
-                    `"${employee.nip}"`,
-                    `"${employee.position}"`,
-                    employee.cutiTahunan || 0,
-                    employee.cutiBesar || 0,
-                    employee.cutiAlasanPenting || 0,
-                    employee.cutiSakit || 0,
-                    employee.cutiMelahirkan || 0,
-                    employee.cutiDiluarTanggungan || 0,
-                    totalCuti,
-                    `"${employee.narasi ? employee.narasi.cutiTahunan || '' : ''}"`,
-                    `"${employee.narasi ? employee.narasi.cutiBesar || '' : ''}"`,
-                    `"${employee.narasi ? employee.narasi.cutiAlasanPenting || '' : ''}"`,
-                    `"${employee.narasi ? employee.narasi.cutiSakit || '' : ''}"`,
-                    `"${employee.narasi ? employee.narasi.cutiMelahirkan || '' : ''}"`,
-                    `"${employee.narasi ? employee.narasi.cutiDiluarTanggungan || '' : ''}"`,
-                    `"${employee.narasi ? employee.narasi.totalCuti || '' : ''}"`
-                ];
-                
-                csvContent += row.join(",") + "\n";
-            });
-            
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-            const filename = `Data_Cuti_Pegawai_RRI_Sibolga_${dateStr}_${timeStr}.csv`;
-            
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showNotification('Data berhasil diekspor ke file Excel!', 'success');
+            showNotification('Fitur ekspor Excel akan segera tersedia', 'info');
         }
 
-        // Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg text-white transform translate-x-full transition-transform duration-300 ${
-                type === 'success' ? 'bg-green-500' : 
-                type === 'error' ? 'bg-red-500' : 
-                'bg-blue-500'
-            }`;
-            
-            notification.innerHTML = `
-                <div class="flex items-center space-x-3">
-                    <i class="fas ${
-                        type === 'success' ? 'fa-check-circle' : 
-                        type === 'error' ? 'fa-exclamation-circle' : 
-                        'fa-info-circle'
-                    }"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            setTimeout(() => {
-                notification.style.transform = 'translateX(full)';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        document.body.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
-        }
-
-        // Make functions globally available
-        window.toggleNarasi = toggleNarasi;
-        window.updateNarasi = updateNarasi;
-        window.updateCutiValue = updateCutiValue;
+        // Global functions for HTML onclick handlers
         window.showEmployeeDetail = showEmployeeDetail;
         window.editEmployee = editEmployee;
         window.deleteEmployee = deleteEmployee;
-        window.showImageEditor = showImageEditor;
+        window.toggleNarasi = toggleNarasi;
+        window.updateCutiValue = updateCutiValue;
+        window.updateNarasi = updateNarasi;
         window.resetCropArea = resetCropArea;
         window.cropAndSaveImage = cropAndSaveImage;
         window.closeImageEditor = closeImageEditor;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98122d8d43d9fd9a',t:'MTc1ODIxMjUwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'981560f8a090f8ce',t:'MTc1ODI0NjA2Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
