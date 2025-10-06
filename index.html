@@ -176,6 +176,9 @@
             <button onclick="loadEmployeesFromFirestore()" class="bg-slate-600 hover:bg-slate-500 px-4 py-2 rounded-lg border border-slate-500 transition-colors duration-300">
                 <span class="text-white text-sm font-medium">🔄 Refresh Data</span>
             </button>
+            <button onclick="debugNamaMatching()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg border border-blue-500 transition-colors duration-300">
+                <span class="text-white text-sm font-medium">🔍 Debug Nama</span>
+            </button>
         </div>
     </div>
 
@@ -601,10 +604,12 @@
             });
         }
 
-        // Load cuti records from Firestore
+        // Load cuti records from Firestore (with permission handling)
         async function loadCutiRecordsFromFirestore() {
             try {
                 console.log('📊 Loading cuti records from Firestore...');
+                
+                // Try to load records, but handle permission errors gracefully
                 const snapshot = await db.collection('cuti_records').orderBy('createdAt', 'desc').get();
                 
                 cutiRecords = [];
@@ -618,7 +623,9 @@
                 console.log('✅ Loaded', cutiRecords.length, 'cuti records from Firestore');
                 return cutiRecords;
             } catch (error) {
-                console.error('❌ Error loading cuti records:', error);
+                console.warn('⚠️ Could not load cuti records from Firestore:', error.message);
+                console.log('📊 Using spreadsheet data only for cuti calculations');
+                cutiRecords = []; // Initialize empty array
                 return [];
             }
         }
@@ -809,6 +816,80 @@
             document.getElementById('narasiModal').addEventListener('click', (e) => {
                 if (e.target === document.getElementById('narasiModal')) closeNarasiModal();
             });
+        }
+
+        // Debug nama matching function
+        function debugNamaMatching() {
+            console.log('🔍 === DEBUG NAMA MATCHING ===');
+            console.log('📊 Data Spreadsheet:', cutiData.length, 'records');
+            console.log('👥 Data Pegawai:', employees.length, 'employees');
+            console.log('🔥 Data Firestore Records:', cutiRecords.length, 'records');
+            
+            // Get unique names from spreadsheet
+            const spreadsheetNames = [...new Set(cutiData.map(cuti => cuti.nama))].filter(nama => nama);
+            console.log('📋 Nama di Spreadsheet:', spreadsheetNames);
+            
+            // Get names from employees
+            const employeeNames = employees.map(emp => emp.name);
+            console.log('👤 Nama di Sistem:', employeeNames);
+            
+            // Check matching
+            const matches = [];
+            const notMatched = [];
+            
+            employeeNames.forEach(empName => {
+                const found = spreadsheetNames.find(sheetName => 
+                    sheetName.toLowerCase().trim() === empName.toLowerCase().trim()
+                );
+                
+                if (found) {
+                    const cutiCount = cutiData.filter(cuti => 
+                        cuti.nama.toLowerCase().trim() === empName.toLowerCase().trim()
+                    ).length;
+                    matches.push({ employee: empName, spreadsheet: found, cutiCount });
+                } else {
+                    // Check for similar names
+                    const similar = spreadsheetNames.filter(sheetName => 
+                        sheetName.toLowerCase().includes(empName.toLowerCase()) ||
+                        empName.toLowerCase().includes(sheetName.toLowerCase())
+                    );
+                    notMatched.push({ employee: empName, similar });
+                }
+            });
+            
+            console.log('✅ NAMA YANG COCOK:', matches);
+            console.log('❌ NAMA TIDAK COCOK:', notMatched);
+            
+            // Show detailed analysis for each employee
+            employees.forEach(employee => {
+                const recordsLeave = calculateEmployeeLeaveFromRecords(employee.name);
+                const totalFromRecords = Object.values(recordsLeave).reduce((sum, val) => sum + val, 0);
+                console.log(`👤 ${employee.name}:`, {
+                    manual: {
+                        tahunan: employee.cutiTahunan || 0,
+                        besar: employee.cutiBesar || 0,
+                        alasanPenting: employee.cutiAlasanPenting || 0,
+                        sakit: employee.cutiSakit || 0,
+                        melahirkan: employee.cutiMelahirkan || 0,
+                        diluarTanggungan: employee.cutiDiluarTanggungan || 0
+                    },
+                    fromRecords: recordsLeave,
+                    totalFromRecords: totalFromRecords
+                });
+            });
+            
+            // Show popup summary
+            const summary = `🔍 DEBUG HASIL PENCOCOKAN NAMA\n\n` +
+                          `📊 Data Spreadsheet: ${cutiData.length} records\n` +
+                          `👥 Data Pegawai: ${employees.length} employees\n` +
+                          `🔥 Data Firestore: ${cutiRecords.length} records\n\n` +
+                          `✅ Nama Cocok: ${matches.length}\n` +
+                          `❌ Nama Tidak Cocok: ${notMatched.length}\n\n` +
+                          `📋 Nama di Spreadsheet:\n${spreadsheetNames.join('\n')}\n\n` +
+                          `👤 Nama di Sistem:\n${employeeNames.join('\n')}\n\n` +
+                          `Lihat Console (F12) untuk detail lengkap!`;
+            
+            alert(summary);
         }
 
         // Handle photo upload
@@ -1246,45 +1327,59 @@
             }
         }
 
-        // Sync cuti data to Firestore
+        // Sync cuti data to Firestore (with permission handling)
         async function syncCutiDataToFirestore() {
             try {
                 console.log('🔄 Syncing cuti data to Firestore...');
                 
+                // Check if user has permission to write
+                if (!currentUser || !isAdminMode) {
+                    console.log('⚠️ Skipping Firestore sync - no admin permission');
+                    return;
+                }
+                
                 for (const cuti of cutiData) {
-                    // Check if record already exists
-                    const existingQuery = await db.collection('cuti_records')
-                        .where('namaPegawai', '==', cuti.nama)
-                        .where('tanggalMulai', '==', cuti.tanggalMulai)
-                        .where('tanggalSelesai', '==', cuti.tanggalSelesai)
-                        .where('sumberData', '==', 'form')
-                        .get();
-                    
-                    if (existingQuery.empty) {
-                        // Add new record
-                        await db.collection('cuti_records').add({
-                            timestamp: cuti.timestamp,
-                            namaPegawai: cuti.nama,
-                            statusPegawai: cuti.statusPegawai,
-                            jenisCuti: cuti.jenisCuti,
-                            tanggalMulai: cuti.tanggalMulai,
-                            tanggalSelesai: cuti.tanggalSelesai,
-                            berkasPersyaratan: cuti.berkas,
-                            totalHari: parseInt(cuti.totalHari) || 0,
-                            sumberData: 'form',
-                            inputBy: 'system',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        console.log('✅ Added new cuti record for:', cuti.nama);
+                    try {
+                        // Check if record already exists
+                        const existingQuery = await db.collection('cuti_records')
+                            .where('namaPegawai', '==', cuti.nama)
+                            .where('tanggalMulai', '==', cuti.tanggalMulai)
+                            .where('tanggalSelesai', '==', cuti.tanggalSelesai)
+                            .where('sumberData', '==', 'form')
+                            .get();
+                        
+                        if (existingQuery.empty) {
+                            // Add new record
+                            await db.collection('cuti_records').add({
+                                timestamp: cuti.timestamp,
+                                namaPegawai: cuti.nama,
+                                statusPegawai: cuti.statusPegawai,
+                                jenisCuti: cuti.jenisCuti,
+                                tanggalMulai: cuti.tanggalMulai,
+                                tanggalSelesai: cuti.tanggalSelesai,
+                                berkasPersyaratan: cuti.berkas,
+                                totalHari: parseInt(cuti.totalHari) || 0,
+                                sumberData: 'form',
+                                inputBy: 'system',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            console.log('✅ Added new cuti record for:', cuti.nama);
+                        }
+                    } catch (recordError) {
+                        console.warn('⚠️ Failed to sync record for:', cuti.nama, recordError.message);
                     }
                 }
                 
-                // Reload cuti records from Firestore
-                await loadCutiRecordsFromFirestore();
+                // Try to reload cuti records from Firestore
+                try {
+                    await loadCutiRecordsFromFirestore();
+                } catch (loadError) {
+                    console.warn('⚠️ Could not load cuti records from Firestore, using spreadsheet data only');
+                }
                 
             } catch (error) {
-                console.error('❌ Error syncing cuti data:', error);
+                console.warn('⚠️ Firestore sync failed, using spreadsheet data only:', error.message);
             }
         }
 
@@ -2059,5 +2154,5 @@
         // Initialize the application
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a633e9340bcb36',t:'MTc1OTc2NDY1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a67378007dce3d',t:'MTc1OTc2NzI1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
