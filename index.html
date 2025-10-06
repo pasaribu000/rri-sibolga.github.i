@@ -173,6 +173,9 @@
             <div class="bg-slate-600 px-4 py-2 rounded-lg border border-slate-500">
                 <span class="text-white text-sm font-medium">🏆 Cuti Terbanyak: <span id="mostUsedLeave">-</span></span>
             </div>
+            <div id="firestoreStatus" class="bg-slate-600 px-4 py-2 rounded-lg border border-slate-500">
+                <span class="text-white text-sm font-medium">🔥 Firestore: <span id="firestoreStatusText">Checking...</span></span>
+            </div>
             <button onclick="loadEmployeesFromFirestore()" class="bg-slate-600 hover:bg-slate-500 px-4 py-2 rounded-lg border border-slate-500 transition-colors duration-300">
                 <span class="text-white text-sm font-medium">🔄 Refresh Data</span>
             </button>
@@ -609,6 +612,13 @@
             try {
                 console.log('📊 Loading cuti records from Firestore...');
                 
+                // Check if user has permission first
+                if (!currentUser) {
+                    console.log('⚠️ No user logged in, skipping Firestore cuti records');
+                    cutiRecords = [];
+                    return [];
+                }
+                
                 // Try to load records, but handle permission errors gracefully
                 const snapshot = await db.collection('cuti_records').orderBy('createdAt', 'desc').get();
                 
@@ -623,7 +633,7 @@
                 console.log('✅ Loaded', cutiRecords.length, 'cuti records from Firestore');
                 return cutiRecords;
             } catch (error) {
-                console.warn('⚠️ Could not load cuti records from Firestore:', error.message);
+                console.warn('⚠️ Firestore cuti records unavailable:', error.code || error.message);
                 console.log('📊 Using spreadsheet data only for cuti calculations');
                 cutiRecords = []; // Initialize empty array
                 return [];
@@ -692,6 +702,7 @@
         async function loadEmployeesFromFirestore() {
             try {
                 console.log('🔄 Starting to load employees from Firestore...');
+                updateFirestoreStatus('loading', 'Loading...');
                 
                 // Show loading state
                 document.getElementById('loadingState').classList.remove('hidden');
@@ -711,8 +722,15 @@
                 
                 console.log('✅ Successfully loaded', employees.length, 'employees from Firestore');
                 
-                // Load cuti records
+                // Load cuti records and check permissions
                 await loadCutiRecordsFromFirestore();
+                
+                // Update Firestore status based on permissions
+                if (cutiRecords.length > 0 || currentUser) {
+                    updateFirestoreStatus('connected', 'Connected');
+                } else {
+                    updateFirestoreStatus('limited', 'Read Only');
+                }
                 
                 // Always render employees, even if array is empty
                 renderEmployees();
@@ -723,6 +741,7 @@
                 
             } catch (error) {
                 console.error('❌ Error loading employees:', error);
+                updateFirestoreStatus('error', 'Connection Error');
                 
                 // Hide loading state even on error
                 document.getElementById('loadingState').classList.add('hidden');
@@ -1338,6 +1357,18 @@
                     return;
                 }
                 
+                // Test write permission first
+                try {
+                    await db.collection('test_permission').add({ test: true });
+                    await db.collection('test_permission').where('test', '==', true).get().then(snapshot => {
+                        snapshot.forEach(doc => doc.ref.delete());
+                    });
+                } catch (permissionError) {
+                    console.warn('⚠️ No write permission to Firestore, skipping sync');
+                    return;
+                }
+                
+                let syncCount = 0;
                 for (const cuti of cutiData) {
                     try {
                         // Check if record already exists
@@ -1364,22 +1395,25 @@
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                             });
+                            syncCount++;
                             console.log('✅ Added new cuti record for:', cuti.nama);
                         }
                     } catch (recordError) {
-                        console.warn('⚠️ Failed to sync record for:', cuti.nama, recordError.message);
+                        console.warn('⚠️ Failed to sync record for:', cuti.nama, recordError.code || recordError.message);
                     }
                 }
+                
+                console.log(`📊 Sync completed: ${syncCount} new records added`);
                 
                 // Try to reload cuti records from Firestore
                 try {
                     await loadCutiRecordsFromFirestore();
                 } catch (loadError) {
-                    console.warn('⚠️ Could not load cuti records from Firestore, using spreadsheet data only');
+                    console.warn('⚠️ Could not reload cuti records from Firestore');
                 }
                 
             } catch (error) {
-                console.warn('⚠️ Firestore sync failed, using spreadsheet data only:', error.message);
+                console.warn('⚠️ Firestore sync failed:', error.code || error.message);
             }
         }
 
@@ -1504,6 +1538,32 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        // Update Firestore status
+        function updateFirestoreStatus(status, message) {
+            const statusElement = document.getElementById('firestoreStatusText');
+            const containerElement = document.getElementById('firestoreStatus');
+            
+            if (statusElement && containerElement) {
+                statusElement.textContent = message;
+                
+                // Update container color based on status
+                containerElement.className = 'px-4 py-2 rounded-lg border';
+                switch (status) {
+                    case 'connected':
+                        containerElement.className += ' bg-green-600 border-green-500';
+                        break;
+                    case 'limited':
+                        containerElement.className += ' bg-yellow-600 border-yellow-500';
+                        break;
+                    case 'error':
+                        containerElement.className += ' bg-red-600 border-red-500';
+                        break;
+                    default:
+                        containerElement.className += ' bg-slate-600 border-slate-500';
+                }
+            }
         }
 
         // Update statistics
@@ -2154,5 +2214,5 @@
         // Initialize the application
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a67378007dce3d',t:'MTc1OTc2NzI1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a67f69175ecb36',t:'MTc1OTc2Nzc0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
