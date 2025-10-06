@@ -812,36 +812,60 @@
 
         // Photo editor controls
         function setupPhotoEditorControls() {
-            document.getElementById('zoomIn').addEventListener('click', () => {
-                photoEditorState.scale = Math.min(photoEditorState.scale * 1.2, 3);
-                drawPhoto();
-            });
+            // Check if elements exist before adding event listeners
+            const zoomIn = document.getElementById('zoomIn');
+            const zoomOut = document.getElementById('zoomOut');
+            const rotateLeft = document.getElementById('rotateLeft');
+            const rotateRight = document.getElementById('rotateRight');
+            const resetPhoto = document.getElementById('resetPhoto');
+            const applyPhotoEditBtn = document.getElementById('applyPhotoEdit');
+            const cancelPhotoEditBtn = document.getElementById('cancelPhotoEdit');
             
-            document.getElementById('zoomOut').addEventListener('click', () => {
-                photoEditorState.scale = Math.max(photoEditorState.scale / 1.2, 0.5);
-                drawPhoto();
-            });
+            if (zoomIn) {
+                zoomIn.addEventListener('click', () => {
+                    photoEditorState.scale = Math.min(photoEditorState.scale * 1.2, 3);
+                    drawPhoto();
+                });
+            }
             
-            document.getElementById('rotateLeft').addEventListener('click', () => {
-                photoEditorState.rotation -= 90;
-                drawPhoto();
-            });
+            if (zoomOut) {
+                zoomOut.addEventListener('click', () => {
+                    photoEditorState.scale = Math.max(photoEditorState.scale / 1.2, 0.5);
+                    drawPhoto();
+                });
+            }
             
-            document.getElementById('rotateRight').addEventListener('click', () => {
-                photoEditorState.rotation += 90;
-                drawPhoto();
-            });
+            if (rotateLeft) {
+                rotateLeft.addEventListener('click', () => {
+                    photoEditorState.rotation -= 90;
+                    drawPhoto();
+                });
+            }
             
-            document.getElementById('resetPhoto').addEventListener('click', () => {
-                photoEditorState.scale = 1;
-                photoEditorState.rotation = 0;
-                photoEditorState.offsetX = 0;
-                photoEditorState.offsetY = 0;
-                drawPhoto();
-            });
+            if (rotateRight) {
+                rotateRight.addEventListener('click', () => {
+                    photoEditorState.rotation += 90;
+                    drawPhoto();
+                });
+            }
             
-            document.getElementById('applyPhotoEdit').addEventListener('click', applyPhotoEdit);
-            document.getElementById('cancelPhotoEdit').addEventListener('click', cancelPhotoEdit);
+            if (resetPhoto) {
+                resetPhoto.addEventListener('click', () => {
+                    photoEditorState.scale = 1;
+                    photoEditorState.rotation = 0;
+                    photoEditorState.offsetX = 0;
+                    photoEditorState.offsetY = 0;
+                    drawPhoto();
+                });
+            }
+            
+            if (applyPhotoEditBtn) {
+                applyPhotoEditBtn.addEventListener('click', applyPhotoEdit);
+            }
+            
+            if (cancelPhotoEditBtn) {
+                cancelPhotoEditBtn.addEventListener('click', cancelPhotoEdit);
+            }
             
             // Canvas dragging for panning
             let isDragging = false;
@@ -1663,5 +1687,5 @@
         // Initialize the application
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a58e6fb33f411c',t:'MTc1OTc1Nzg3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a5a16635ab6034',t:'MTc1OTc1ODY1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
