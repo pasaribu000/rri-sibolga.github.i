@@ -173,13 +173,13 @@
             <div class="bg-slate-600 px-4 py-2 rounded-lg border border-slate-500">
                 <span class="text-white text-sm font-medium">🏆 Cuti Terbanyak: <span id="mostUsedLeave">-</span></span>
             </div>
-            <div id="firestoreStatus" class="bg-slate-600 px-4 py-2 rounded-lg border border-slate-500">
+            <div id="firestoreStatus" class="bg-slate-600 px-4 py-2 rounded-lg border border-slate-500 hidden">
                 <span class="text-white text-sm font-medium">🔥 Firestore: <span id="firestoreStatusText">Checking...</span></span>
             </div>
-            <button onclick="loadEmployeesFromFirestore()" class="bg-slate-600 hover:bg-slate-500 px-4 py-2 rounded-lg border border-slate-500 transition-colors duration-300">
+            <button id="refreshDataBtn" onclick="loadEmployeesFromFirestore()" class="bg-slate-600 hover:bg-slate-500 px-4 py-2 rounded-lg border border-slate-500 transition-colors duration-300 hidden">
                 <span class="text-white text-sm font-medium">🔄 Refresh Data</span>
             </button>
-            <button onclick="debugNamaMatching()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg border border-blue-500 transition-colors duration-300">
+            <button id="debugNamaBtn" onclick="debugNamaMatching()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg border border-blue-500 transition-colors duration-300 hidden">
                 <span class="text-white text-sm font-medium">🔍 Debug Nama</span>
             </button>
         </div>
@@ -589,11 +589,19 @@
                         modeToggle.textContent = '👨‍💼 Admin';
                         modeToggle.className = 'btn-luxury bg-green-600 text-white px-4 py-2 rounded-lg font-medium';
                         adminControls.classList.remove('hidden');
+                        // Show admin-only features
+                        document.getElementById('firestoreStatus').classList.remove('hidden');
+                        document.getElementById('refreshDataBtn').classList.remove('hidden');
+                        document.getElementById('debugNamaBtn').classList.remove('hidden');
                     } else {
                         isAdminMode = false;
                         modeToggle.textContent = '👤 ' + user.email.split('@')[0];
                         modeToggle.className = 'btn-luxury bg-blue-600 text-white px-4 py-2 rounded-lg font-medium';
                         adminControls.classList.add('hidden');
+                        // Hide admin-only features
+                        document.getElementById('firestoreStatus').classList.add('hidden');
+                        document.getElementById('refreshDataBtn').classList.add('hidden');
+                        document.getElementById('debugNamaBtn').classList.add('hidden');
                     }
                     closeLoginModal();
                 } else {
@@ -602,6 +610,10 @@
                     modeToggle.textContent = '👤 Login';
                     modeToggle.className = 'btn-luxury text-red-600 px-4 py-2 rounded-lg font-medium';
                     adminControls.classList.add('hidden');
+                    // Hide admin-only features when logged out
+                    document.getElementById('firestoreStatus').classList.add('hidden');
+                    document.getElementById('refreshDataBtn').classList.add('hidden');
+                    document.getElementById('debugNamaBtn').classList.add('hidden');
                 }
                 renderEmployees();
             });
@@ -2214,5 +2226,5 @@
         // Initialize the application
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a67f69175ecb36',t:'MTc1OTc2Nzc0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a69189b0f09fda',t:'MTc1OTc2ODQ5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
