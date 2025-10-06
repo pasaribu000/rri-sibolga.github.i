@@ -12,58 +12,150 @@
     <style>
         body {
             box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
+        
+        /* Simple Card Styles */
+        .simple-card {
+            background: #374151;
+            border: 1px solid #4b5563;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Simple Background */
+        .simple-bg {
+            background: #1e293b;
+        }
+        
+        /* Floating Animation */
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Shimmer Effect */
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* Enhanced Card Hover */
+        .luxury-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        }
+        
+        .luxury-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.1);
+        }
+        
+        /* Glow Effects */
+        .glow-avatar {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+        }
+        
+        /* Progress Bar Enhancement */
+        .progress-bar {
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            background-size: 200% 100%;
+            animation: progress-shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes progress-shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Modal Enhancements */
         .modal-backdrop {
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.6);
         }
-        .card-hover {
-            transition: all 0.3s ease;
+        
+        /* Simple Button Styles */
+        .btn-simple {
+            background: #4b5563;
+            border: 1px solid #6b7280;
+            transition: background-color 0.3s ease;
         }
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        
+        .btn-simple:hover {
+            background: #374151;
         }
+        
+        /* Photo Editor Styles */
         #cropOverlay {
             pointer-events: all;
             user-select: none;
+            border: 3px solid #3b82f6;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.1);
         }
+        
         #photoCanvas {
             cursor: grab;
+            border-radius: 12px;
         }
+        
         #photoCanvas:active {
             cursor: grabbing;
         }
+        
+        /* Enhanced Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+<body class="simple-bg min-h-screen">
     <!-- Header -->
-    <header class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 shadow-2xl">
+    <header class="bg-red-700 shadow-lg">
         <div class="container mx-auto px-6 py-6">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg floating">
                         <span class="text-red-600 font-bold text-2xl">📻</span>
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-white">Procuti RRI Sibolga</h1>
                         <p class="text-red-100">Sistem Manajemen Cuti Pegawai Radio Republik Indonesia</p>
-                        <div class="flex items-center space-x-4 mt-2">
-                            <div class="bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                                <span class="text-white text-sm font-medium">📊 Total Pegawai: <span id="totalEmployees">0</span></span>
-                            </div>
-                            <div class="bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                                <span class="text-white text-sm font-medium">🏆 Cuti Terbanyak: <span id="mostUsedLeave">-</span></span>
-                            </div>
-                            <button onclick="loadEmployeesFromFirestore()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full transition-colors">
-                                <span class="text-white text-sm font-medium">🔄 Refresh Data</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center space-x-2">
                         <span class="text-sm text-red-100">Mode:</span>
-                        <button id="modeToggle" class="bg-white text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors font-medium">
+                        <button id="modeToggle" class="btn-simple text-white px-4 py-2 rounded-lg font-medium">
                             👤 Pengguna
                         </button>
                     </div>
@@ -72,15 +164,30 @@
         </div>
     </header>
 
+    <!-- Statistics Section -->
+    <div class="container mx-auto px-6 py-4">
+        <div class="flex flex-wrap items-center justify-center gap-4">
+            <div class="bg-slate-600 px-4 py-2 rounded-lg border border-slate-500">
+                <span class="text-white text-sm font-medium">📊 Total Pegawai: <span id="totalEmployees">0</span></span>
+            </div>
+            <div class="bg-slate-600 px-4 py-2 rounded-lg border border-slate-500">
+                <span class="text-white text-sm font-medium">🏆 Cuti Terbanyak: <span id="mostUsedLeave">-</span></span>
+            </div>
+            <button onclick="loadEmployeesFromFirestore()" class="bg-slate-600 hover:bg-slate-500 px-4 py-2 rounded-lg border border-slate-500 transition-colors duration-300">
+                <span class="text-white text-sm font-medium">🔄 Refresh Data</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="container mx-auto px-6 py-8">
         <!-- Admin Controls -->
         <div id="adminControls" class="hidden mb-8">
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <div class="bg-slate-700 rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+                <h2 class="text-xl font-bold text-white mb-4 flex items-center">
                     ⚙️ Panel Admin
                 </h2>
-                <button id="addEmployeeBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                <button id="addEmployeeBtn" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
                     ➕ Tambah Pegawai Baru
                 </button>
             </div>
@@ -88,10 +195,10 @@
 
         <!-- Pegawai Cuti Hari Ini -->
         <div class="mb-8">
-            <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg p-6 text-white">
+            <div class="bg-orange-600 rounded-lg shadow-lg p-6 text-white">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-3">
-                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center floating">
                             <span class="text-2xl">🏖️</span>
                         </div>
                         <div>
@@ -99,7 +206,7 @@
                             <p class="text-orange-100" id="todayDate">Loading...</p>
                         </div>
                     </div>
-                    <button id="refreshCutiData" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-colors">
+                    <button id="refreshCutiData" class="btn-simple text-white px-4 py-2 rounded-lg">
                         🔄 Refresh
                     </button>
                 </div>
@@ -118,14 +225,14 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Search Bar -->
                 <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-lg p-6 h-full">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <div class="bg-slate-700 rounded-lg shadow-lg p-6 h-full">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
                             🔍 Pencarian
                         </h3>
                         <div class="flex flex-col space-y-3">
                             <input type="text" id="searchInput" placeholder="Cari nama pegawai..." 
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                   class="w-full px-4 py-3 border border-white border-opacity-20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white bg-opacity-10 text-white placeholder-gray-300 backdrop-blur-md">
+                            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105">
                                 🔍 Cari Pegawai
                             </button>
                         </div>
@@ -134,13 +241,13 @@
                 
                 <!-- Ajukan Cuti -->
                 <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-lg p-6 h-full">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <div class="bg-slate-700 rounded-lg shadow-lg p-6 h-full">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
                             📝 Ajukan Cuti
                         </h3>
-                        <p class="text-gray-600 text-sm mb-4">Buat permohonan cuti online</p>
+                        <p class="text-gray-200 text-sm mb-4">Buat permohonan cuti online</p>
                         <a href="https://forms.gle/861qeHyM5Puou9Ue9" target="_blank" rel="noopener noreferrer" 
-                           class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-center block">
+                           class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 font-medium text-center block transform hover:scale-105">
                             📋 Formulir Cuti
                         </a>
                     </div>
@@ -148,29 +255,27 @@
                 
                 <!-- Unduh Berkas -->
                 <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-lg p-6 h-full">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <div class="bg-slate-700 rounded-lg shadow-lg p-6 h-full">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
                             📁 Unduh Berkas
                         </h3>
-                        <p class="text-gray-600 text-sm mb-4">Akses folder berkas persyaratan cuti</p>
+                        <p class="text-gray-200 text-sm mb-4">Akses folder berkas persyaratan cuti</p>
                         <a href="GANTI_DENGAN_URL_GOOGLE_DRIVE_ANDA" target="_blank" rel="noopener noreferrer" 
-                           class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-center block">
+                           class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-medium text-center block transform hover:scale-105">
                             📄 Folder Google Drive
                         </a>
                     </div>
                 </div>
-                
-
             </div>
         </div>
 
         <!-- Loading State -->
         <div id="loadingState" class="text-center py-16">
             <div class="flex items-center justify-center mb-4">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
-            <h3 class="text-xl font-semibold text-gray-600 mb-2">Memuat Data Pegawai...</h3>
-            <p class="text-gray-500">Mohon tunggu sebentar</p>
+            <h3 class="text-xl font-semibold text-white mb-2">Memuat Data Pegawai...</h3>
+            <p class="text-gray-200">Mohon tunggu sebentar</p>
         </div>
 
         <!-- Employee Cards Grid -->
@@ -181,19 +286,19 @@
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-16">
             <div class="text-6xl mb-4">📄</div>
-            <h3 class="text-xl font-semibold text-gray-600 mb-2">Belum Ada Data Pegawai</h3>
-            <p class="text-gray-500">Login sebagai admin untuk menambahkan data pegawai</p>
+            <h3 class="text-xl font-semibold text-white mb-2">Belum Ada Data Pegawai</h3>
+            <p class="text-gray-200">Login sebagai admin untuk menambahkan data pegawai</p>
         </div>
     </main>
 
     <!-- Employee Detail Modal -->
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6">
                     <div class="flex justify-between items-start mb-6">
                         <h2 class="text-2xl font-bold text-gray-800">Detail Cuti Pegawai</h2>
-                        <button id="closeDetailModal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        <button id="closeDetailModal" class="text-gray-500 hover:text-gray-700 text-2xl transition-colors">×</button>
                     </div>
                     
                     <div id="detailContent">
@@ -207,10 +312,10 @@
     <!-- Admin Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="bg-white rounded-lg shadow-2xl max-w-md w-full">
                 <div class="p-6">
                     <div class="text-center mb-6">
-                        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4 glow-avatar">
                             <span class="text-white font-bold text-2xl">🔐</span>
                         </div>
                         <h2 class="text-2xl font-bold text-gray-800">Login Admin</h2>
@@ -221,24 +326,24 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                             <input type="email" id="adminEmail" required 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300"
                                    placeholder="Masukkan email admin">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
                             <input type="password" id="adminPassword" required 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300"
                                    placeholder="Masukkan password">
                         </div>
                         
                         <div id="loginError" class="hidden text-red-500 text-sm text-center"></div>
                         
                         <div class="flex space-x-3 pt-4">
-                            <button type="submit" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-4 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105">
                                 🔓 Login
                             </button>
-                            <button type="button" id="cancelLogin" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+                            <button type="button" id="cancelLogin" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-all duration-300">
                                 Batal
                             </button>
                         </div>
@@ -251,27 +356,27 @@
     <!-- Narasi Cuti Modal -->
     <div id="narasiModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+            <div class="bg-white rounded-lg shadow-2xl max-w-lg w-full">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 id="narasiModalTitle" class="text-xl font-bold text-gray-800">Edit Narasi Cuti</h2>
-                        <button id="closeNarasiModal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        <button id="closeNarasiModal" class="text-gray-500 hover:text-gray-700 text-2xl transition-colors">×</button>
                     </div>
                     
                     <form id="narasiForm" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2" id="narasiLabel">Narasi untuk Cuti</label>
                             <textarea id="narasiText" rows="4" 
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-300"
                                       placeholder="Masukkan narasi atau keterangan untuk jenis cuti ini..."></textarea>
                             <p class="text-xs text-gray-500 mt-1">Narasi ini akan ditampilkan ketika detail cuti diklik</p>
                         </div>
                         
                         <div class="flex space-x-3 pt-4">
-                            <button type="submit" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105">
                                 💾 Simpan Narasi
                             </button>
-                            <button type="button" id="cancelNarasiModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+                            <button type="button" id="cancelNarasiModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-all duration-300">
                                 Batal
                             </button>
                         </div>
@@ -284,41 +389,41 @@
     <!-- Add/Edit Employee Modal -->
     <div id="employeeModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="bg-white rounded-lg shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 id="modalTitle" class="text-xl font-bold text-gray-800">Tambah Pegawai Baru</h2>
-                        <button id="closeEmployeeModal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        <button id="closeEmployeeModal" class="text-gray-500 hover:text-gray-700 text-2xl transition-colors">×</button>
                     </div>
                     
                     <form id="employeeForm" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pegawai</label>
                             <input type="text" id="employeeName" required 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">NIP</label>
                             <input type="text" id="employeeNip" required 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Jabatan</label>
                             <input type="text" id="employeePosition" required 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Foto Pegawai (Maksimal 700KB)</label>
                             <div class="flex items-center space-x-4">
-                                <div id="photoPreview" class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                                <div id="photoPreview" class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden glow-avatar">
                                     <span class="text-gray-500 text-xs">Foto</span>
                                 </div>
                                 <div class="flex-1">
                                     <input type="file" id="employeePhoto" accept="image/*" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                                     <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, GIF. Maksimal 700KB</p>
                                 </div>
                             </div>
@@ -330,21 +435,21 @@
                                 <div class="flex flex-col items-center space-y-3">
                                     <div class="relative">
                                         <canvas id="photoCanvas" class="border border-gray-300 rounded-lg max-w-full" width="300" height="300"></canvas>
-                                        <div id="cropOverlay" class="absolute border-2 border-blue-500 bg-blue-500 bg-opacity-20 rounded-full cursor-move" 
+                                        <div id="cropOverlay" class="absolute cursor-move" 
                                              style="width: 150px; height: 150px; top: 75px; left: 75px;"></div>
                                     </div>
                                     
                                     <div class="flex flex-wrap gap-2 justify-center">
-                                        <button type="button" id="zoomIn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">🔍+ Zoom In</button>
-                                        <button type="button" id="zoomOut" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">🔍- Zoom Out</button>
-                                        <button type="button" id="rotateLeft" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">↺ Putar Kiri</button>
-                                        <button type="button" id="rotateRight" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">↻ Putar Kanan</button>
-                                        <button type="button" id="resetPhoto" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">🔄 Reset</button>
+                                        <button type="button" id="zoomIn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">🔍+ Zoom In</button>
+                                        <button type="button" id="zoomOut" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors">🔍- Zoom Out</button>
+                                        <button type="button" id="rotateLeft" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors">↺ Putar Kiri</button>
+                                        <button type="button" id="rotateRight" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors">↻ Putar Kanan</button>
+                                        <button type="button" id="resetPhoto" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors">🔄 Reset</button>
                                     </div>
                                     
                                     <div class="flex space-x-2">
-                                        <button type="button" id="applyPhotoEdit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">✅ Terapkan</button>
-                                        <button type="button" id="cancelPhotoEdit" class="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">❌ Batal</button>
+                                        <button type="button" id="applyPhotoEdit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">✅ Terapkan</button>
+                                        <button type="button" id="cancelPhotoEdit" class="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors">❌ Batal</button>
                                     </div>
                                 </div>
                             </div>
@@ -363,12 +468,12 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Cuti Tahunan</label>
                                 <input type="number" id="cutiTahunan" min="0" value="0" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Cuti Besar</label>
                                 <input type="number" id="cutiBesar" min="0" value="0" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                             </div>
                         </div>
                         
@@ -376,12 +481,12 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Cuti Alasan Penting</label>
                                 <input type="number" id="cutiAlasanPenting" min="0" value="0" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Cuti Sakit</label>
                                 <input type="number" id="cutiSakit" min="0" value="0" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                             </div>
                         </div>
                         
@@ -389,20 +494,20 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Cuti Melahirkan</label>
                                 <input type="number" id="cutiMelahirkan" min="0" value="0" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Cuti Diluar Tanggungan</label>
                                 <input type="number" id="cutiDiluarTanggungan" min="0" value="0" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
                             </div>
                         </div>
                         
                         <div class="flex space-x-3 pt-4">
-                            <button type="submit" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105">
                                 Simpan
                             </button>
-                            <button type="button" id="cancelEmployeeModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+                            <button type="button" id="cancelEmployeeModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-all duration-300">
                                 Batal
                             </button>
                         </div>
@@ -433,6 +538,7 @@
         let isAdminMode = false;
         let currentUser = null;
         let cutiData = []; // Data cuti dari Google Sheets
+        let cutiRecords = []; // Data cuti dari Firestore
         let employees = [];
         let editingEmployeeId = null;
         let currentNarasiEmployee = null;
@@ -475,12 +581,12 @@
                     if (user.email === 'priadipasaribu@gmail.com') {
                         isAdminMode = true;
                         modeToggle.textContent = '👨‍💼 Admin';
-                        modeToggle.className = 'bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium';
+                        modeToggle.className = 'btn-luxury bg-green-600 text-white px-4 py-2 rounded-lg font-medium';
                         adminControls.classList.remove('hidden');
                     } else {
                         isAdminMode = false;
                         modeToggle.textContent = '👤 ' + user.email.split('@')[0];
-                        modeToggle.className = 'bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium';
+                        modeToggle.className = 'btn-luxury bg-blue-600 text-white px-4 py-2 rounded-lg font-medium';
                         adminControls.classList.add('hidden');
                     }
                     closeLoginModal();
@@ -488,48 +594,118 @@
                     console.log('User logged out');
                     isAdminMode = false;
                     modeToggle.textContent = '👤 Login';
-                    modeToggle.className = 'bg-white text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors font-medium';
+                    modeToggle.className = 'btn-luxury text-red-600 px-4 py-2 rounded-lg font-medium';
                     adminControls.classList.add('hidden');
                 }
                 renderEmployees();
             });
         }
 
+        // Load cuti records from Firestore
+        async function loadCutiRecordsFromFirestore() {
+            try {
+                console.log('📊 Loading cuti records from Firestore...');
+                const snapshot = await db.collection('cuti_records').orderBy('createdAt', 'desc').get();
+                
+                cutiRecords = [];
+                snapshot.forEach((doc) => {
+                    cutiRecords.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                console.log('✅ Loaded', cutiRecords.length, 'cuti records from Firestore');
+                return cutiRecords;
+            } catch (error) {
+                console.error('❌ Error loading cuti records:', error);
+                return [];
+            }
+        }
+
+        // Calculate employee leave from records
+        function calculateEmployeeLeaveFromRecords(employeeName) {
+            const totals = {
+                cutiTahunan: 0,
+                cutiBesar: 0,
+                cutiAlasanPenting: 0,
+                cutiSakit: 0,
+                cutiMelahirkan: 0,
+                cutiDiluarTanggungan: 0
+            };
+            
+            // Calculate from Google Sheets data
+            cutiData.forEach(cuti => {
+                if (cuti.nama === employeeName) {
+                    const hari = parseInt(cuti.totalHari) || 0;
+                    const jenis = cuti.jenisCuti?.toLowerCase() || '';
+                    
+                    if (jenis.includes('tahunan')) {
+                        totals.cutiTahunan += hari;
+                    } else if (jenis.includes('besar')) {
+                        totals.cutiBesar += hari;
+                    } else if (jenis.includes('alasan penting')) {
+                        totals.cutiAlasanPenting += hari;
+                    } else if (jenis.includes('sakit')) {
+                        totals.cutiSakit += hari;
+                    } else if (jenis.includes('melahirkan')) {
+                        totals.cutiMelahirkan += hari;
+                    } else if (jenis.includes('diluar tanggungan')) {
+                        totals.cutiDiluarTanggungan += hari;
+                    }
+                }
+            });
+            
+            // Calculate from Firestore records
+            cutiRecords.forEach(record => {
+                if (record.namaPegawai === employeeName) {
+                    const hari = parseInt(record.totalHari) || 0;
+                    const jenis = record.jenisCuti?.toLowerCase() || '';
+                    
+                    if (jenis.includes('tahunan')) {
+                        totals.cutiTahunan += hari;
+                    } else if (jenis.includes('besar')) {
+                        totals.cutiBesar += hari;
+                    } else if (jenis.includes('alasan penting')) {
+                        totals.cutiAlasanPenting += hari;
+                    } else if (jenis.includes('sakit')) {
+                        totals.cutiSakit += hari;
+                    } else if (jenis.includes('melahirkan')) {
+                        totals.cutiMelahirkan += hari;
+                    } else if (jenis.includes('diluar tanggungan')) {
+                        totals.cutiDiluarTanggungan += hari;
+                    }
+                }
+            });
+            
+            return totals;
+        }
+
         // Firebase Firestore Functions
         async function loadEmployeesFromFirestore() {
             try {
                 console.log('🔄 Starting to load employees from Firestore...');
-                console.log('📊 Firebase config check:', firebase.apps.length > 0 ? 'Firebase initialized' : 'Firebase NOT initialized');
-                console.log('🔗 Database connection:', db ? 'Database connected' : 'Database NOT connected');
                 
                 // Show loading state
                 document.getElementById('loadingState').classList.remove('hidden');
                 document.getElementById('employeeGrid').classList.add('hidden');
                 document.getElementById('emptyState').classList.add('hidden');
                 
-                // Test Firebase connection first
-                console.log('🧪 Testing Firestore connection...');
-                const testQuery = await db.collection('employees').limit(1).get();
-                console.log('✅ Firestore connection successful, query returned:', testQuery.size, 'documents');
-                
-                // Now load all employees
-                console.log('📥 Loading all employees...');
+                // Load employees
                 const snapshot = await db.collection('employees').orderBy('name').get();
                 
                 employees = [];
-                console.log('📋 Processing', snapshot.size, 'documents from Firestore...');
-                
-                snapshot.forEach((doc, index) => {
-                    const data = doc.data();
-                    console.log(`📄 Document ${index + 1}:`, doc.id, data);
+                snapshot.forEach((doc) => {
                     employees.push({
                         id: doc.id,
-                        ...data
+                        ...doc.data()
                     });
                 });
                 
                 console.log('✅ Successfully loaded', employees.length, 'employees from Firestore');
-                console.log('👥 Employee list:', employees.map(emp => ({ id: emp.id, name: emp.name })));
+                
+                // Load cuti records
+                await loadCutiRecordsFromFirestore();
                 
                 // Always render employees, even if array is empty
                 renderEmployees();
@@ -538,21 +714,13 @@
                 // Hide loading state
                 document.getElementById('loadingState').classList.add('hidden');
                 
-                // Show success message in console
-                console.log('🎉 Data loading completed successfully!');
-                
             } catch (error) {
                 console.error('❌ Error loading employees:', error);
-                console.error('🔍 Error details:', {
-                    code: error.code,
-                    message: error.message,
-                    stack: error.stack
-                });
                 
                 // Hide loading state even on error
                 document.getElementById('loadingState').classList.add('hidden');
                 
-                // Show detailed error message
+                // Show error state
                 const employeeGrid = document.getElementById('employeeGrid');
                 const emptyState = document.getElementById('emptyState');
                 
@@ -561,22 +729,15 @@
                 emptyState.innerHTML = `
                     <div class="text-center py-16">
                         <div class="text-6xl mb-4">⚠️</div>
-                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Gagal Memuat Data Pegawai</h3>
-                        <p class="text-gray-500 mb-2">Terjadi kesalahan saat memuat data dari database</p>
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 max-w-md mx-auto">
-                            <p class="text-red-700 text-sm font-medium">Detail Error:</p>
-                            <p class="text-red-600 text-xs mt-1">${error.message}</p>
-                            ${error.code ? `<p class="text-red-500 text-xs mt-1">Kode: ${error.code}</p>` : ''}
+                        <h3 class="text-xl font-semibold text-white mb-2">Gagal Memuat Data Pegawai</h3>
+                        <p class="text-gray-200 mb-2">Terjadi kesalahan saat memuat data dari database</p>
+                        <div class="glass-card bg-red-50 bg-opacity-20 border border-red-200 rounded-lg p-4 mb-4 max-w-md mx-auto">
+                            <p class="text-red-200 text-sm font-medium">Detail Error:</p>
+                            <p class="text-red-100 text-xs mt-1">${error.message}</p>
                         </div>
-                        <div class="space-y-2">
-                            <button onclick="loadEmployeesFromFirestore()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                                🔄 Coba Lagi
-                            </button>
-                            <br>
-                            <button onclick="checkFirebaseStatus()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                                🔍 Periksa Koneksi Firebase
-                            </button>
-                        </div>
+                        <button onclick="loadEmployeesFromFirestore()" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105">
+                            🔄 Coba Lagi
+                        </button>
                     </div>
                 `;
             }
@@ -601,8 +762,6 @@
                 alert('Gagal menyimpan data pegawai. Silakan coba lagi.');
             }
         }
-
-
 
         // Initialize App
         function init() {
@@ -944,9 +1103,6 @@
             const password = document.getElementById('adminPassword').value;
             const loginError = document.getElementById('loginError');
             
-            console.log('🔐 Attempting login with email:', email);
-            console.log('🔧 Firebase Auth object:', auth ? 'Available' : 'Not available');
-            
             try {
                 // Clear previous errors
                 loginError.classList.add('hidden');
@@ -957,12 +1113,9 @@
                 submitBtn.textContent = '🔄 Logging in...';
                 submitBtn.disabled = true;
                 
-                console.log('📡 Sending login request to Firebase...');
-                
                 // Sign in with Firebase Auth
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 console.log('✅ User signed in successfully:', userCredential.user.email);
-                console.log('🎯 User UID:', userCredential.user.uid);
                 
                 // Reset button
                 submitBtn.textContent = originalText;
@@ -970,11 +1123,7 @@
                 
                 // The onAuthStateChanged listener will handle the UI updates
             } catch (error) {
-                console.error('❌ Login error details:', {
-                    code: error.code,
-                    message: error.message,
-                    email: email
-                });
+                console.error('❌ Login error:', error);
                 
                 // Reset button
                 const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -985,7 +1134,7 @@
                 
                 switch (error.code) {
                     case 'auth/user-not-found':
-                        errorMessage = `❌ Email "${email}" tidak terdaftar di sistem.\n\nPastikan email sudah didaftarkan di Firebase Authentication.`;
+                        errorMessage = `❌ Email "${email}" tidak terdaftar di sistem.`;
                         break;
                     case 'auth/wrong-password':
                         errorMessage = '❌ Password salah. Periksa kembali password Anda.';
@@ -1008,13 +1157,6 @@
                 
                 loginError.textContent = errorMessage;
                 loginError.classList.remove('hidden');
-                
-                // Show detailed error in console
-                console.log('🔍 Detailed error analysis:');
-                console.log('   - Email entered:', email);
-                console.log('   - Error code:', error.code);
-                console.log('   - Error message:', error.message);
-                console.log('   - Firebase project:', firebaseConfig.projectId);
             }
         }
 
@@ -1081,18 +1223,68 @@
                 }).filter(item => item && item.nama && item.tanggalMulai && item.tanggalSelesai);
                 
                 console.log('Data cuti berhasil dimuat:', cutiData.length, 'records');
+                console.log('Sample data:', cutiData.slice(0, 3));
+                
+                // Sync new data to Firestore
+                await syncCutiDataToFirestore();
+                
                 renderCutiToday();
+                
+                // Re-render employees to update totals
+                renderEmployees();
             } catch (error) {
                 console.error('Error loading cuti data:', error);
                 document.getElementById('cutiTodayContainer').innerHTML = `
-                    <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                    <div class="glass-card bg-white bg-opacity-20 rounded-lg p-4 text-center">
                         <p class="text-white">❌ Gagal memuat data cuti</p>
                         <p class="text-orange-100 text-sm mt-1">Periksa koneksi internet atau coba refresh</p>
-                        <button onclick="loadCutiData()" class="mt-2 bg-white bg-opacity-30 hover:bg-opacity-40 px-3 py-1 rounded text-sm transition-colors">
+                        <button onclick="loadCutiData()" class="mt-2 btn-luxury px-3 py-1 rounded text-sm">
                             🔄 Coba Lagi
                         </button>
                     </div>
                 `;
+            }
+        }
+
+        // Sync cuti data to Firestore
+        async function syncCutiDataToFirestore() {
+            try {
+                console.log('🔄 Syncing cuti data to Firestore...');
+                
+                for (const cuti of cutiData) {
+                    // Check if record already exists
+                    const existingQuery = await db.collection('cuti_records')
+                        .where('namaPegawai', '==', cuti.nama)
+                        .where('tanggalMulai', '==', cuti.tanggalMulai)
+                        .where('tanggalSelesai', '==', cuti.tanggalSelesai)
+                        .where('sumberData', '==', 'form')
+                        .get();
+                    
+                    if (existingQuery.empty) {
+                        // Add new record
+                        await db.collection('cuti_records').add({
+                            timestamp: cuti.timestamp,
+                            namaPegawai: cuti.nama,
+                            statusPegawai: cuti.statusPegawai,
+                            jenisCuti: cuti.jenisCuti,
+                            tanggalMulai: cuti.tanggalMulai,
+                            tanggalSelesai: cuti.tanggalSelesai,
+                            berkasPersyaratan: cuti.berkas,
+                            totalHari: parseInt(cuti.totalHari) || 0,
+                            sumberData: 'form',
+                            inputBy: 'system',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        console.log('✅ Added new cuti record for:', cuti.nama);
+                    }
+                }
+                
+                // Reload cuti records from Firestore
+                await loadCutiRecordsFromFirestore();
+                
+            } catch (error) {
+                console.error('❌ Error syncing cuti data:', error);
             }
         }
 
@@ -1168,26 +1360,41 @@
         function renderCutiToday() {
             const container = document.getElementById('cutiTodayContainer');
             
+            // Combine data from Google Sheets and Firestore
+            const allCutiData = [...cutiData];
+            cutiRecords.forEach(record => {
+                if (record.sumberData !== 'form') { // Only add manual entries
+                    allCutiData.push({
+                        nama: record.namaPegawai,
+                        statusPegawai: record.statusPegawai,
+                        jenisCuti: record.jenisCuti,
+                        tanggalMulai: record.tanggalMulai,
+                        tanggalSelesai: record.tanggalSelesai,
+                        totalHari: record.totalHari
+                    });
+                }
+            });
+            
             // Filter employees who are on leave today
-            const employeesOnLeaveToday = cutiData.filter(cuti => 
+            const employeesOnLeaveToday = allCutiData.filter(cuti => 
                 isTodayInRange(cuti.tanggalMulai, cuti.tanggalSelesai)
             );
             
             if (employeesOnLeaveToday.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                    <div class="glass-card bg-white bg-opacity-20 rounded-lg p-4 text-center">
                         <p class="text-white font-medium">✅ Tidak ada pegawai yang cuti hari ini</p>
                         <p class="text-orange-100 text-sm mt-1">Semua pegawai hadir bekerja</p>
-                        ${cutiData.length > 0 ? `<p class="text-orange-200 text-xs mt-2">Total ${cutiData.length} data cuti tersedia</p>` : ''}
+                        ${allCutiData.length > 0 ? `<p class="text-orange-200 text-xs mt-2">Total ${allCutiData.length} data cuti tersedia</p>` : ''}
                     </div>
                 `;
                 return;
             }
             
             container.innerHTML = employeesOnLeaveToday.map(cuti => `
-                <div class="bg-white bg-opacity-20 rounded-lg p-4 flex items-center justify-between">
+                <div class="glass-card bg-white bg-opacity-20 rounded-lg p-4 flex items-center justify-between luxury-card">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
+                        <div class="w-10 h-10 bg-white bg-opacity-30 rounded-full flex items-center justify-center glow-avatar">
                             <span class="text-white font-bold">${cuti.nama.charAt(0).toUpperCase()}</span>
                         </div>
                         <div>
@@ -1209,7 +1416,7 @@
             // Update total employees
             document.getElementById('totalEmployees').textContent = employees.length;
             
-            // Calculate most used leave type
+            // Calculate most used leave type from all data
             const leaveTypes = {
                 'Tahunan': 0,
                 'Besar': 0,
@@ -1220,12 +1427,13 @@
             };
             
             employees.forEach(employee => {
-                leaveTypes['Tahunan'] += employee.cutiTahunan;
-                leaveTypes['Besar'] += employee.cutiBesar;
-                leaveTypes['Alasan Penting'] += employee.cutiAlasanPenting;
-                leaveTypes['Sakit'] += employee.cutiSakit;
-                leaveTypes['Melahirkan'] += employee.cutiMelahirkan;
-                leaveTypes['Diluar Tanggungan'] += employee.cutiDiluarTanggungan;
+                const leaveFromRecords = calculateEmployeeLeaveFromRecords(employee.name);
+                leaveTypes['Tahunan'] += (employee.cutiTahunan || 0) + leaveFromRecords.cutiTahunan;
+                leaveTypes['Besar'] += (employee.cutiBesar || 0) + leaveFromRecords.cutiBesar;
+                leaveTypes['Alasan Penting'] += (employee.cutiAlasanPenting || 0) + leaveFromRecords.cutiAlasanPenting;
+                leaveTypes['Sakit'] += (employee.cutiSakit || 0) + leaveFromRecords.cutiSakit;
+                leaveTypes['Melahirkan'] += (employee.cutiMelahirkan || 0) + leaveFromRecords.cutiMelahirkan;
+                leaveTypes['Diluar Tanggungan'] += (employee.cutiDiluarTanggungan || 0) + leaveFromRecords.cutiDiluarTanggungan;
             });
             
             // Find most used leave type
@@ -1243,7 +1451,7 @@
         // Generate avatar with initials or photo
         function generateAvatar(name, photo = null) {
             if (photo) {
-                return `<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200">
+                return `<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-white border-opacity-30 glow-avatar">
                     <img src="${photo}" alt="${name}" class="w-full h-full object-cover">
                 </div>`;
             }
@@ -1252,13 +1460,18 @@
             const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-red-500'];
             const colorClass = colors[name.length % colors.length];
             
-            return `<div class="${colorClass} w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl">${initials}</div>`;
+            return `<div class="${colorClass} w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl glow-avatar">${initials}</div>`;
         }
 
         // Calculate total leave days
         function calculateTotalLeave(employee) {
-            return employee.cutiTahunan + employee.cutiBesar + employee.cutiAlasanPenting + 
-                   employee.cutiSakit + employee.cutiMelahirkan + employee.cutiDiluarTanggungan;
+            const manualTotal = (employee.cutiTahunan || 0) + (employee.cutiBesar || 0) + (employee.cutiAlasanPenting || 0) + 
+                               (employee.cutiSakit || 0) + (employee.cutiMelahirkan || 0) + (employee.cutiDiluarTanggungan || 0);
+            
+            const recordsTotal = calculateEmployeeLeaveFromRecords(employee.name);
+            const recordsTotalSum = Object.values(recordsTotal).reduce((sum, val) => sum + val, 0);
+            
+            return manualTotal + recordsTotalSum;
         }
 
         // Render employee cards
@@ -1283,27 +1496,35 @@
 
             employeeGrid.innerHTML = employeesToRender.map(employee => {
                 const totalLeave = calculateTotalLeave(employee);
+                const recordsLeave = calculateEmployeeLeaveFromRecords(employee.name);
+                const recordsTotalSum = Object.values(recordsLeave).reduce((sum, val) => sum + val, 0);
+                
                 return `
-                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover cursor-pointer relative" onclick="openEmployeeDetail('${employee.id}')">
+                    <div class="bg-slate-700 rounded-lg shadow-lg p-6 cursor-pointer relative hover:bg-slate-600 transition-colors duration-300" onclick="openEmployeeDetail('${employee.id}')">
                         ${isAdminMode ? `
                             <button onclick="handleDeleteClick(event, '${employee.id}')" 
-                                    class="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition-colors shadow-lg z-10">×</button>
+                                    class="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-300 shadow-lg z-10 hover:scale-110">×</button>
                             <button onclick="handleEditClick(event, '${employee.id}')" 
-                                    class="absolute top-3 right-12 bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors shadow-lg z-10">✏️</button>
+                                    class="absolute top-3 right-12 bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-300 shadow-lg z-10 hover:scale-110">✏️</button>
                         ` : ''}
                         
                         <div class="flex flex-col items-center text-center">
                             ${generateAvatar(employee.name, employee.photo)}
-                            <h3 class="mt-4 text-lg font-bold text-gray-800">${employee.name}</h3>
-                            <p class="text-sm text-gray-600 mb-2">${employee.position}</p>
-                            <p class="text-xs text-gray-500 mb-4">NIP: ${employee.nip}</p>
+                            <h3 class="mt-4 text-lg font-bold text-white">${employee.name}</h3>
+                            <p class="text-sm text-gray-200 mb-2">${employee.position}</p>
+                            <p class="text-xs text-gray-300 mb-4">NIP: ${employee.nip}</p>
                             
-                            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
-                                <div class="bg-red-600 h-2 rounded-full" style="width: ${Math.min((totalLeave / 30) * 100, 100)}%"></div>
+                            <div class="w-full bg-white bg-opacity-20 rounded-full h-3 mb-2 overflow-hidden">
+                                <div class="progress-bar h-3 rounded-full transition-all duration-500" style="width: ${Math.min((totalLeave / 30) * 100, 100)}%"></div>
                             </div>
-                            <p class="text-sm font-medium text-gray-700">
-                                Total Cuti: <span class="text-red-600 font-bold">${totalLeave} hari</span>
+                            <p class="text-sm font-medium text-white">
+                                Total Cuti: <span class="text-yellow-300 font-bold">${totalLeave} hari</span>
                             </p>
+                            ${recordsTotalSum > 0 ? `
+                                <p class="text-xs text-gray-300 mt-1">
+                                    📋 ${recordsTotalSum} dari form + 📝 ${totalLeave - recordsTotalSum} manual
+                                </p>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -1319,10 +1540,30 @@
                 return;
             }
 
-            const totalLeave = calculateTotalLeave(employee);
+            const manualLeave = {
+                cutiTahunan: employee.cutiTahunan || 0,
+                cutiBesar: employee.cutiBesar || 0,
+                cutiAlasanPenting: employee.cutiAlasanPenting || 0,
+                cutiSakit: employee.cutiSakit || 0,
+                cutiMelahirkan: employee.cutiMelahirkan || 0,
+                cutiDiluarTanggungan: employee.cutiDiluarTanggungan || 0
+            };
+            
+            const recordsLeave = calculateEmployeeLeaveFromRecords(employee.name);
+            
+            const totalLeave = {
+                cutiTahunan: manualLeave.cutiTahunan + recordsLeave.cutiTahunan,
+                cutiBesar: manualLeave.cutiBesar + recordsLeave.cutiBesar,
+                cutiAlasanPenting: manualLeave.cutiAlasanPenting + recordsLeave.cutiAlasanPenting,
+                cutiSakit: manualLeave.cutiSakit + recordsLeave.cutiSakit,
+                cutiMelahirkan: manualLeave.cutiMelahirkan + recordsLeave.cutiMelahirkan,
+                cutiDiluarTanggungan: manualLeave.cutiDiluarTanggungan + recordsLeave.cutiDiluarTanggungan
+            };
+            
+            const grandTotal = Object.values(totalLeave).reduce((sum, val) => sum + val, 0);
             
             document.getElementById('detailContent').innerHTML = `
-                <div class="flex items-center space-x-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-center space-x-4 mb-6 p-4 glass-card rounded-lg">
                     ${generateAvatar(employee.name, employee.photo)}
                     <div>
                         <h3 class="text-xl font-bold text-gray-800">${employee.name}</h3>
@@ -1332,47 +1573,68 @@
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div class="bg-blue-50 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:bg-blue-100' : ''} transition-colors" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiTahunan', 'Cuti Tahunan')"` : ''}>
-                        <h4 class="font-semibold text-blue-800 mb-2">📅 Cuti Tahunan Terpakai</h4>
-                        <p class="text-2xl font-bold text-blue-600">${employee.cutiTahunan} hari</p>
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:from-blue-100 hover:to-blue-200' : ''} transition-all duration-300" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiTahunan', 'Cuti Tahunan')"` : ''}>
+                        <h4 class="font-semibold text-blue-800 mb-2">📅 Cuti Tahunan</h4>
+                        <p class="text-2xl font-bold text-blue-600">${totalLeave.cutiTahunan} hari</p>
+                        <div class="text-sm text-blue-700 mt-2">
+                            📝 Manual: ${manualLeave.cutiTahunan} | 📋 Form: ${recordsLeave.cutiTahunan}
+                        </div>
                         ${employee.narasi?.cutiTahunan ? `<p class="text-sm text-blue-700 mt-2 italic">"${employee.narasi.cutiTahunan}"</p>` : ''}
                         ${isAdminMode ? '<p class="text-xs text-blue-600 mt-1">👆 Klik untuk edit narasi</p>' : ''}
                     </div>
-                    <div class="bg-green-50 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:bg-green-100' : ''} transition-colors" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiBesar', 'Cuti Besar')"` : ''}>
-                        <h4 class="font-semibold text-green-800 mb-2">🏖️ Cuti Besar Terpakai</h4>
-                        <p class="text-2xl font-bold text-green-600">${employee.cutiBesar} hari</p>
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:from-green-100 hover:to-green-200' : ''} transition-all duration-300" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiBesar', 'Cuti Besar')"` : ''}>
+                        <h4 class="font-semibold text-green-800 mb-2">🏖️ Cuti Besar</h4>
+                        <p class="text-2xl font-bold text-green-600">${totalLeave.cutiBesar} hari</p>
+                        <div class="text-sm text-green-700 mt-2">
+                            📝 Manual: ${manualLeave.cutiBesar} | 📋 Form: ${recordsLeave.cutiBesar}
+                        </div>
                         ${employee.narasi?.cutiBesar ? `<p class="text-sm text-green-700 mt-2 italic">"${employee.narasi.cutiBesar}"</p>` : ''}
                         ${isAdminMode ? '<p class="text-xs text-green-600 mt-1">👆 Klik untuk edit narasi</p>' : ''}
                     </div>
-                    <div class="bg-yellow-50 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:bg-yellow-100' : ''} transition-colors" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiAlasanPenting', 'Cuti Alasan Penting')"` : ''}>
-                        <h4 class="font-semibold text-yellow-800 mb-2">⚠️ Cuti Alasan Penting Terpakai</h4>
-                        <p class="text-2xl font-bold text-yellow-600">${employee.cutiAlasanPenting} hari</p>
+                    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:from-yellow-100 hover:to-yellow-200' : ''} transition-all duration-300" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiAlasanPenting', 'Cuti Alasan Penting')"` : ''}>
+                        <h4 class="font-semibold text-yellow-800 mb-2">⚠️ Cuti Alasan Penting</h4>
+                        <p class="text-2xl font-bold text-yellow-600">${totalLeave.cutiAlasanPenting} hari</p>
+                        <div class="text-sm text-yellow-700 mt-2">
+                            📝 Manual: ${manualLeave.cutiAlasanPenting} | 📋 Form: ${recordsLeave.cutiAlasanPenting}
+                        </div>
                         ${employee.narasi?.cutiAlasanPenting ? `<p class="text-sm text-yellow-700 mt-2 italic">"${employee.narasi.cutiAlasanPenting}"</p>` : ''}
                         ${isAdminMode ? '<p class="text-xs text-yellow-600 mt-1">👆 Klik untuk edit narasi</p>' : ''}
                     </div>
-                    <div class="bg-red-50 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:bg-red-100' : ''} transition-colors" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiSakit', 'Cuti Sakit')"` : ''}>
-                        <h4 class="font-semibold text-red-800 mb-2">🏥 Cuti Sakit Terpakai</h4>
-                        <p class="text-2xl font-bold text-red-600">${employee.cutiSakit} hari</p>
+                    <div class="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:from-red-100 hover:to-red-200' : ''} transition-all duration-300" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiSakit', 'Cuti Sakit')"` : ''}>
+                        <h4 class="font-semibold text-red-800 mb-2">🏥 Cuti Sakit</h4>
+                        <p class="text-2xl font-bold text-red-600">${totalLeave.cutiSakit} hari</p>
+                        <div class="text-sm text-red-700 mt-2">
+                            📝 Manual: ${manualLeave.cutiSakit} | 📋 Form: ${recordsLeave.cutiSakit}
+                        </div>
                         ${employee.narasi?.cutiSakit ? `<p class="text-sm text-red-700 mt-2 italic">"${employee.narasi.cutiSakit}"</p>` : ''}
                         ${isAdminMode ? '<p class="text-xs text-red-600 mt-1">👆 Klik untuk edit narasi</p>' : ''}
                     </div>
-                    <div class="bg-pink-50 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:bg-pink-100' : ''} transition-colors" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiMelahirkan', 'Cuti Melahirkan')"` : ''}>
-                        <h4 class="font-semibold text-pink-800 mb-2">👶 Cuti Melahirkan Terpakai</h4>
-                        <p class="text-2xl font-bold text-pink-600">${employee.cutiMelahirkan} hari</p>
+                    <div class="bg-gradient-to-br from-pink-50 to-pink-100 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:from-pink-100 hover:to-pink-200' : ''} transition-all duration-300" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiMelahirkan', 'Cuti Melahirkan')"` : ''}>
+                        <h4 class="font-semibold text-pink-800 mb-2">👶 Cuti Melahirkan</h4>
+                        <p class="text-2xl font-bold text-pink-600">${totalLeave.cutiMelahirkan} hari</p>
+                        <div class="text-sm text-pink-700 mt-2">
+                            📝 Manual: ${manualLeave.cutiMelahirkan} | 📋 Form: ${recordsLeave.cutiMelahirkan}
+                        </div>
                         ${employee.narasi?.cutiMelahirkan ? `<p class="text-sm text-pink-700 mt-2 italic">"${employee.narasi.cutiMelahirkan}"</p>` : ''}
                         ${isAdminMode ? '<p class="text-xs text-pink-600 mt-1">👆 Klik untuk edit narasi</p>' : ''}
                     </div>
-                    <div class="bg-gray-50 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:bg-gray-100' : ''} transition-colors" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiDiluarTanggungan', 'Cuti Diluar Tanggungan Negara')"` : ''}>
-                        <h4 class="font-semibold text-gray-800 mb-2">🏃 Cuti Diluar Tanggungan Negara Terpakai</h4>
-                        <p class="text-2xl font-bold text-gray-600">${employee.cutiDiluarTanggungan} hari</p>
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg ${isAdminMode ? 'cursor-pointer hover:from-gray-100 hover:to-gray-200' : ''} transition-all duration-300" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'cutiDiluarTanggungan', 'Cuti Diluar Tanggungan Negara')"` : ''}>
+                        <h4 class="font-semibold text-gray-800 mb-2">🏃 Cuti Diluar Tanggungan Negara</h4>
+                        <p class="text-2xl font-bold text-gray-600">${totalLeave.cutiDiluarTanggungan} hari</p>
+                        <div class="text-sm text-gray-700 mt-2">
+                            📝 Manual: ${manualLeave.cutiDiluarTanggungan} | 📋 Form: ${recordsLeave.cutiDiluarTanggungan}
+                        </div>
                         ${employee.narasi?.cutiDiluarTanggungan ? `<p class="text-sm text-gray-700 mt-2 italic">"${employee.narasi.cutiDiluarTanggungan}"</p>` : ''}
                         ${isAdminMode ? '<p class="text-xs text-gray-600 mt-1">👆 Klik untuk edit narasi</p>' : ''}
                     </div>
                 </div>
                 
-                <div class="bg-indigo-50 p-4 rounded-lg text-center ${isAdminMode ? 'cursor-pointer hover:bg-indigo-100' : ''} transition-colors" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'totalCuti', 'Total Cuti')"` : ''}>
+                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-lg text-center ${isAdminMode ? 'cursor-pointer hover:from-indigo-100 hover:to-indigo-200' : ''} transition-all duration-300" ${isAdminMode ? `onclick="openNarasiModal('${employee.id}', 'totalCuti', 'Total Cuti')"` : ''}>
                     <h4 class="font-semibold text-indigo-800 mb-2">📊 Total Cuti Terpakai</h4>
-                    <p class="text-3xl font-bold text-indigo-600">${totalLeave} hari</p>
+                    <p class="text-3xl font-bold text-indigo-600">${grandTotal} hari</p>
+                    <div class="text-sm text-indigo-700 mt-2">
+                        📝 Manual: ${Object.values(manualLeave).reduce((sum, val) => sum + val, 0)} | 📋 Form: ${Object.values(recordsLeave).reduce((sum, val) => sum + val, 0)}
+                    </div>
                     ${employee.narasi?.totalCuti ? `<p class="text-sm text-indigo-700 mt-2 italic">"${employee.narasi.totalCuti}"</p>` : ''}
                     ${isAdminMode ? '<p class="text-xs text-indigo-600 mt-1">👆 Klik untuk edit narasi</p>' : ''}
                 </div>
@@ -1433,12 +1695,12 @@
             document.getElementById('employeeName').value = employee.name;
             document.getElementById('employeeNip').value = employee.nip;
             document.getElementById('employeePosition').value = employee.position;
-            document.getElementById('cutiTahunan').value = employee.cutiTahunan;
-            document.getElementById('cutiBesar').value = employee.cutiBesar;
-            document.getElementById('cutiAlasanPenting').value = employee.cutiAlasanPenting;
-            document.getElementById('cutiSakit').value = employee.cutiSakit;
-            document.getElementById('cutiMelahirkan').value = employee.cutiMelahirkan;
-            document.getElementById('cutiDiluarTanggungan').value = employee.cutiDiluarTanggungan;
+            document.getElementById('cutiTahunan').value = employee.cutiTahunan || 0;
+            document.getElementById('cutiBesar').value = employee.cutiBesar || 0;
+            document.getElementById('cutiAlasanPenting').value = employee.cutiAlasanPenting || 0;
+            document.getElementById('cutiSakit').value = employee.cutiSakit || 0;
+            document.getElementById('cutiMelahirkan').value = employee.cutiMelahirkan || 0;
+            document.getElementById('cutiDiluarTanggungan').value = employee.cutiDiluarTanggungan || 0;
             
             // Set photo preview
             const photoPreview = document.getElementById('photoPreview');
@@ -1547,12 +1809,6 @@
             event.stopImmediatePropagation();
             
             console.log('🖱️ Delete button clicked for employee:', employeeId);
-            console.log('🔍 Event details:', {
-                type: event.type,
-                target: event.target,
-                currentTarget: event.currentTarget,
-                bubbles: event.bubbles
-            });
             
             // Call delete function with a small delay to ensure event handling is complete
             setTimeout(() => {
@@ -1582,8 +1838,6 @@
         // Delete employee with enhanced functionality
         async function deleteEmployee(employeeId) {
             console.log('🗑️ Delete function called with ID:', employeeId);
-            console.log('🔐 Current user:', currentUser ? currentUser.email : 'Not logged in');
-            console.log('👨‍💼 Admin mode:', isAdminMode);
             
             // Check admin permissions
             if (!currentUser || !isAdminMode) {
@@ -1596,17 +1850,9 @@
             const employee = employees.find(emp => emp.id === employeeId);
             if (!employee) {
                 console.error('❌ Employee not found for delete:', employeeId);
-                console.log('📋 Available employees:', employees.map(emp => ({ id: emp.id, name: emp.name })));
                 showNotification('❌ Data pegawai tidak ditemukan.', 'error');
                 return false;
             }
-            
-            console.log('👤 Employee to delete:', {
-                id: employee.id,
-                name: employee.name,
-                nip: employee.nip,
-                position: employee.position
-            });
             
             // Show detailed confirmation dialog
             const confirmMessage = `🗑️ KONFIRMASI PENGHAPUSAN PEGAWAI\n\n` +
@@ -1636,8 +1882,6 @@
                     if (employeeIndex > -1) {
                         employees.splice(employeeIndex, 1);
                         console.log('✅ Employee removed from local array, new count:', employees.length);
-                    } else {
-                        console.warn('⚠️ Employee not found in local array');
                     }
                     
                     // Re-render the UI
@@ -1662,12 +1906,6 @@
                     
                 } catch (error) {
                     console.error('❌ Error deleting employee:', error);
-                    console.error('🔍 Error details:', {
-                        code: error.code,
-                        message: error.message,
-                        stack: error.stack
-                    });
-                    
                     showNotification(`❌ Gagal menghapus pegawai: ${error.message}`, 'error');
                     return false;
                 }
@@ -1684,20 +1922,20 @@
             existingNotifications.forEach(notif => notif.remove());
             
             const notification = document.createElement('div');
-            notification.className = 'notification-toast fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+            notification.className = 'notification-toast fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm glass-effect';
             
             switch (type) {
                 case 'success':
-                    notification.className += ' bg-green-500 text-white';
+                    notification.className += ' bg-green-500 bg-opacity-90 text-white';
                     break;
                 case 'error':
-                    notification.className += ' bg-red-500 text-white';
+                    notification.className += ' bg-red-500 bg-opacity-90 text-white';
                     break;
                 case 'info':
-                    notification.className += ' bg-blue-500 text-white';
+                    notification.className += ' bg-blue-500 bg-opacity-90 text-white';
                     break;
                 default:
-                    notification.className += ' bg-gray-500 text-white';
+                    notification.className += ' bg-gray-500 bg-opacity-90 text-white';
             }
             
             notification.innerHTML = message;
@@ -1807,63 +2045,19 @@
                     if (!detailModal.classList.contains('hidden')) {
                         openEmployeeDetail(currentNarasiEmployee);
                     }
+                    
+                    showNotification('✅ Narasi berhasil disimpan', 'success');
                 } catch (error) {
                     console.error('Error updating narasi:', error);
-                    alert('Gagal menyimpan narasi. Silakan coba lagi.');
+                    showNotification('❌ Gagal menyimpan narasi. Silakan coba lagi.', 'error');
                 }
             }
             
             closeNarasiModal();
         }
 
-        // Debug function to check Firebase status
-        async function checkFirebaseStatus() {
-            console.log('🔍 === FIREBASE STATUS CHECK ===');
-            
-            try {
-                // Check Firebase initialization
-                console.log('📊 Firebase apps:', firebase.apps.length);
-                console.log('🔧 Firebase config:', firebaseConfig);
-                
-                // Check Auth
-                console.log('🔐 Auth object:', auth ? 'Available' : 'Not available');
-                console.log('👤 Current user:', currentUser ? currentUser.email : 'Not logged in');
-                
-                // Check Firestore
-                console.log('💾 Firestore object:', db ? 'Available' : 'Not available');
-                
-                // Test basic Firestore operation
-                console.log('🧪 Testing basic Firestore read...');
-                const testDoc = await db.collection('test').doc('connection').get();
-                console.log('✅ Firestore read test successful');
-                
-                // Check employees collection
-                console.log('👥 Testing employees collection...');
-                const employeesSnapshot = await db.collection('employees').get();
-                console.log('📊 Employees collection size:', employeesSnapshot.size);
-                
-                if (employeesSnapshot.size > 0) {
-                    console.log('📋 Sample employee documents:');
-                    employeesSnapshot.docs.slice(0, 3).forEach((doc, index) => {
-                        console.log(`   ${index + 1}. ID: ${doc.id}, Data:`, doc.data());
-                    });
-                }
-                
-                alert(`✅ Firebase Status Check Complete!\n\n` +
-                      `🔧 Firebase: ${firebase.apps.length > 0 ? 'Initialized' : 'Not initialized'}\n` +
-                      `🔐 Auth: ${auth ? 'Available' : 'Not available'}\n` +
-                      `💾 Firestore: ${db ? 'Available' : 'Not available'}\n` +
-                      `👥 Employees: ${employeesSnapshot.size} documents found\n\n` +
-                      `Check console for detailed logs.`);
-                
-            } catch (error) {
-                console.error('❌ Firebase status check failed:', error);
-                alert(`❌ Firebase Status Check Failed!\n\nError: ${error.message}\n\nCheck console for details.`);
-            }
-        }
-
         // Initialize the application
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a5d0b90786fd89',t:'MTc1OTc2MDU5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a633e9340bcb36',t:'MTc1OTc2NDY1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
