@@ -602,30 +602,7 @@
             }
         }
 
-        async function deleteEmployeeFromFirestore(employeeId) {
-            try {
-                console.log('Deleting employee from Firestore with ID:', employeeId);
-                
-                // Check if document exists first
-                const docRef = db.collection('employees').doc(employeeId);
-                const doc = await docRef.get();
-                
-                if (!doc.exists) {
-                    throw new Error('Document does not exist');
-                }
-                
-                // Delete the document
-                await docRef.delete();
-                console.log('Employee successfully deleted from Firestore');
-                
-                // Reload employees data
-                await loadEmployeesFromFirestore();
-                
-            } catch (error) {
-                console.error('Error deleting employee from Firestore:', error);
-                throw error; // Re-throw to be handled by calling function
-            }
-        }
+
 
         // Initialize App
         function init() {
@@ -1307,12 +1284,12 @@
             employeeGrid.innerHTML = employeesToRender.map(employee => {
                 const totalLeave = calculateTotalLeave(employee);
                 return `
-                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover cursor-pointer relative" onclick="openEmployeeDetail('${employee.id}')"
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover cursor-pointer relative" onclick="openEmployeeDetail('${employee.id}')">
                         ${isAdminMode ? `
-                            <button onclick="event.stopPropagation(); deleteEmployee('${employee.id}')" 
-                                    class="absolute top-3 right-3 text-red-500 hover:text-red-700 text-xl font-bold">×</button>
-                            <button onclick="event.stopPropagation(); editEmployee('${employee.id}')" 
-                                    class="absolute top-3 right-8 text-blue-500 hover:text-blue-700 text-lg">✏️</button>
+                            <button onclick="handleDeleteClick(event, '${employee.id}')" 
+                                    class="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition-colors shadow-lg z-10">×</button>
+                            <button onclick="handleEditClick(event, '${employee.id}')" 
+                                    class="absolute top-3 right-12 bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors shadow-lg z-10">✏️</button>
                         ` : ''}
                         
                         <div class="flex flex-col items-center text-center">
@@ -1562,38 +1539,182 @@
             }
         }
 
-        // Delete employee
+        // Handle delete button click with improved event handling
+        function handleDeleteClick(event, employeeId) {
+            // Stop all event propagation immediately
+            event.stopPropagation();
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            
+            console.log('🖱️ Delete button clicked for employee:', employeeId);
+            console.log('🔍 Event details:', {
+                type: event.type,
+                target: event.target,
+                currentTarget: event.currentTarget,
+                bubbles: event.bubbles
+            });
+            
+            // Call delete function with a small delay to ensure event handling is complete
+            setTimeout(() => {
+                deleteEmployee(employeeId);
+            }, 10);
+            
+            return false;
+        }
+
+        // Handle edit button click with improved event handling
+        function handleEditClick(event, employeeId) {
+            // Stop all event propagation immediately
+            event.stopPropagation();
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            
+            console.log('🖱️ Edit button clicked for employee:', employeeId);
+            
+            // Call edit function with a small delay to ensure event handling is complete
+            setTimeout(() => {
+                editEmployee(employeeId);
+            }, 10);
+            
+            return false;
+        }
+
+        // Delete employee with enhanced functionality
         async function deleteEmployee(employeeId) {
-            console.log('Deleting employee ID:', employeeId);
+            console.log('🗑️ Delete function called with ID:', employeeId);
+            console.log('🔐 Current user:', currentUser ? currentUser.email : 'Not logged in');
+            console.log('👨‍💼 Admin mode:', isAdminMode);
             
+            // Check admin permissions
             if (!currentUser || !isAdminMode) {
-                alert('Anda harus login sebagai admin untuk menghapus pegawai.');
-                return;
+                console.warn('❌ Permission denied: User must be admin to delete employees');
+                showNotification('❌ Anda harus login sebagai admin untuk menghapus pegawai.', 'error');
+                return false;
             }
             
-            const employee = employees.find(emp => emp.id == employeeId);
+            // Find employee data
+            const employee = employees.find(emp => emp.id === employeeId);
             if (!employee) {
-                console.error('Employee not found for delete:', employeeId);
-                alert('Data pegawai tidak ditemukan.');
-                return;
+                console.error('❌ Employee not found for delete:', employeeId);
+                console.log('📋 Available employees:', employees.map(emp => ({ id: emp.id, name: emp.name })));
+                showNotification('❌ Data pegawai tidak ditemukan.', 'error');
+                return false;
             }
             
-            // Show confirmation with employee name
-            const confirmMessage = `Apakah Anda yakin ingin menghapus data pegawai:\n\n"${employee.name}"\nNIP: ${employee.nip}\nJabatan: ${employee.position}\n\nData yang dihapus tidak dapat dikembalikan!`;
+            console.log('👤 Employee to delete:', {
+                id: employee.id,
+                name: employee.name,
+                nip: employee.nip,
+                position: employee.position
+            });
+            
+            // Show detailed confirmation dialog
+            const confirmMessage = `🗑️ KONFIRMASI PENGHAPUSAN PEGAWAI\n\n` +
+                                 `Nama: ${employee.name}\n` +
+                                 `NIP: ${employee.nip}\n` +
+                                 `Jabatan: ${employee.position}\n\n` +
+                                 `⚠️ PERINGATAN:\n` +
+                                 `• Data yang dihapus tidak dapat dikembalikan!\n` +
+                                 `• Semua riwayat cuti akan hilang!\n` +
+                                 `• Foto pegawai akan dihapus!\n\n` +
+                                 `Apakah Anda yakin ingin menghapus pegawai ini?`;
             
             if (confirm(confirmMessage)) {
                 try {
-                    console.log('Attempting to delete employee from Firestore...');
-                    await deleteEmployeeFromFirestore(employeeId);
-                    console.log('Employee deleted successfully');
+                    console.log('🔄 Starting delete process...');
                     
-                    // Show success message
-                    alert(`Data pegawai "${employee.name}" berhasil dihapus.`);
+                    // Show loading notification
+                    showNotification('⏳ Menghapus data pegawai...', 'info');
+                    
+                    // Delete from Firestore
+                    console.log('🔥 Deleting from Firestore...');
+                    await db.collection('employees').doc(employeeId).delete();
+                    console.log('✅ Employee deleted from Firestore successfully');
+                    
+                    // Remove from local array
+                    const employeeIndex = employees.findIndex(emp => emp.id === employeeId);
+                    if (employeeIndex > -1) {
+                        employees.splice(employeeIndex, 1);
+                        console.log('✅ Employee removed from local array, new count:', employees.length);
+                    } else {
+                        console.warn('⚠️ Employee not found in local array');
+                    }
+                    
+                    // Re-render the UI
+                    console.log('🎨 Re-rendering UI...');
+                    renderEmployees();
+                    updateStatistics();
+                    
+                    // Close detail modal if it's open for this employee
+                    if (!detailModal.classList.contains('hidden')) {
+                        const detailContent = document.getElementById('detailContent');
+                        if (detailContent && detailContent.innerHTML.includes(employee.name)) {
+                            console.log('🚪 Closing detail modal for deleted employee');
+                            closeDetailModal();
+                        }
+                    }
+                    
+                    // Show success notification
+                    showNotification(`✅ Data pegawai "${employee.name}" berhasil dihapus`, 'success');
+                    console.log('🎉 Delete operation completed successfully');
+                    
+                    return true;
+                    
                 } catch (error) {
-                    console.error('Error deleting employee:', error);
-                    alert('Gagal menghapus data pegawai. Silakan coba lagi.');
+                    console.error('❌ Error deleting employee:', error);
+                    console.error('🔍 Error details:', {
+                        code: error.code,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    
+                    showNotification(`❌ Gagal menghapus pegawai: ${error.message}`, 'error');
+                    return false;
                 }
+            } else {
+                console.log('❌ Delete operation cancelled by user');
+                return false;
             }
+        }
+
+        // Show notification helper function
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification-toast');
+            existingNotifications.forEach(notif => notif.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification-toast fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+            
+            switch (type) {
+                case 'success':
+                    notification.className += ' bg-green-500 text-white';
+                    break;
+                case 'error':
+                    notification.className += ' bg-red-500 text-white';
+                    break;
+                case 'info':
+                    notification.className += ' bg-blue-500 text-white';
+                    break;
+                default:
+                    notification.className += ' bg-gray-500 text-white';
+            }
+            
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, 4000);
         }
 
         // Handle search
@@ -1744,5 +1865,5 @@
         // Initialize the application
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a5b2e46002fd89',t:'MTc1OTc1OTM3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a5d0b90786fd89',t:'MTc1OTc2MDU5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
