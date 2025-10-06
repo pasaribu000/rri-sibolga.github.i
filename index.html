@@ -770,6 +770,9 @@
                 isDraggingCrop = false;
             });
             
+            // Setup photo editor controls now that elements exist
+            setupPhotoEditorEventListeners();
+            
             // Initial draw
             drawPhoto();
         }
@@ -812,6 +815,12 @@
 
         // Photo editor controls
         function setupPhotoEditorControls() {
+            // Canvas dragging for panning - setup later when canvas is available
+            // Other controls will be set up when photo editor is initialized
+        }
+
+        // Setup photo editor event listeners when editor is shown
+        function setupPhotoEditorEventListeners() {
             // Check if elements exist before adding event listeners
             const zoomIn = document.getElementById('zoomIn');
             const zoomOut = document.getElementById('zoomOut');
@@ -868,33 +877,36 @@
             }
             
             // Canvas dragging for panning
-            let isDragging = false;
-            let lastX, lastY;
-            
-            photoEditorState.canvas.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                lastX = e.clientX;
-                lastY = e.clientY;
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    const deltaX = (e.clientX - lastX) / photoEditorState.scale;
-                    const deltaY = (e.clientY - lastY) / photoEditorState.scale;
-                    
-                    photoEditorState.offsetX += deltaX;
-                    photoEditorState.offsetY += deltaY;
-                    
+            const canvas = document.getElementById('photoCanvas');
+            if (canvas) {
+                let isDragging = false;
+                let lastX, lastY;
+                
+                canvas.addEventListener('mousedown', (e) => {
+                    isDragging = true;
                     lastX = e.clientX;
                     lastY = e.clientY;
-                    
-                    drawPhoto();
-                }
-            });
-            
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-            });
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const deltaX = (e.clientX - lastX) / photoEditorState.scale;
+                        const deltaY = (e.clientY - lastY) / photoEditorState.scale;
+                        
+                        photoEditorState.offsetX += deltaX;
+                        photoEditorState.offsetY += deltaY;
+                        
+                        lastX = e.clientX;
+                        lastY = e.clientY;
+                        
+                        drawPhoto();
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+            }
         }
 
         // Apply photo edit
@@ -1732,5 +1744,5 @@
         // Initialize the application
         init();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a5a891c0f0fd0e',t:'MTc1OTc1ODk0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98a5b2e46002fd89',t:'MTc1OTc1OTM3MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
